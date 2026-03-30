@@ -245,8 +245,41 @@
 
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2">
                         <h3 class="font-bold text-center text-gray-700 mb-2">Đáp ứng thời gian (Time Response)</h3>
-                        <canvas id="timeChart" height="200"></canvas>
+                        <canvas id="timeChart" height="150"></canvas>
                         <p class="text-xs text-center text-gray-500 mt-2">Theo dõi Vị trí \(x\) tiến về \(x_d\)</p>
+                    </div>
+                    
+                    <!-- Tùy chọn ẩn/hiển thị tín hiệu điều khiển -->
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2 flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-8">
+                        <span class="font-bold text-gray-700">Tùy chọn hiển thị tín hiệu:</span>
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="toggle-ueq" checked class="form-checkbox text-blue-600 w-5 h-5">
+                            <span class="ml-2 font-medium text-blue-600">\(u_{eq}\) (Tương đương)</span>
+                        </label>
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="toggle-usw" checked class="form-checkbox text-orange-600 w-5 h-5">
+                            <span class="ml-2 font-medium text-orange-600">\(u_{sw}\) (Chuyển mạch)</span>
+                        </label>
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="toggle-u" checked class="form-checkbox text-green-600 w-5 h-5">
+                            <span class="ml-2 font-medium text-green-600">\(u\) (Tổng)</span>
+                        </label>
+                    </div>
+
+                    <!-- 3 Biểu đồ tín hiệu riêng biệt -->
+                    <div id="container-ueq" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2">
+                        <h3 class="font-bold text-center text-blue-600 mb-2">Tín hiệu Tương đương (\(u_{eq}\))</h3>
+                        <canvas id="controlUeqChart" height="100"></canvas>
+                    </div>
+
+                    <div id="container-usw" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2">
+                        <h3 class="font-bold text-center text-orange-600 mb-2">Tín hiệu Chuyển mạch (\(u_{sw}\))</h3>
+                        <canvas id="controlUswChart" height="100"></canvas>
+                    </div>
+
+                    <div id="container-u" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2">
+                        <h3 class="font-bold text-center text-green-600 mb-2">Tín hiệu Tổng (\(u\))</h3>
+                        <canvas id="controlUChart" height="100"></canvas>
                     </div>
                 </div>
 
@@ -287,6 +320,9 @@
         const stateCtx = document.getElementById('stateChart').getContext('2d');
         const phaseCtx = document.getElementById('phaseChart').getContext('2d');
         const timeCtx = document.getElementById('timeChart').getContext('2d');
+        const ueqCtx = document.getElementById('controlUeqChart').getContext('2d');
+        const uswCtx = document.getElementById('controlUswChart').getContext('2d');
+        const uCtx = document.getElementById('controlUChart').getContext('2d');
 
         // Plotly 3D Variables
         let isPlotlyInitialized = false;
@@ -373,14 +409,16 @@
                         data: [x],
                         borderColor: '#10b981', // green-500
                         tension: 0.1,
-                        pointRadius: 0
+                        pointRadius: 0,
+                        borderWidth: 2
                     },
                     {
                         label: 'Vị trí đặt x_d',
                         data: [xd],
                         borderColor: '#6b7280', // gray-500
                         borderDash: [2, 2],
-                        pointRadius: 0
+                        pointRadius: 0,
+                        borderWidth: 2
                     }
                 ]
             },
@@ -392,6 +430,53 @@
                     y: { title: { display: true, text: 'Giá trị' } }
                 }
             }
+        });
+
+        // Tùy chọn chung cho các trục của biểu đồ điều khiển
+        const controlChartOptions = {
+            responsive: true,
+            animation: false,
+            scales: {
+                x: { title: { display: true, text: 'Thời gian t (s)' } },
+                y: { title: { display: true, text: 'Biên độ' } }
+            },
+            plugins: { legend: { display: false } }
+        };
+
+        // Khởi tạo đồ thị Tín hiệu U_eq
+        const controlUeqChart = new Chart(ueqCtx, {
+            type: 'line',
+            data: {
+                labels: [0],
+                datasets: [{
+                    label: 'u_eq', data: [0], borderColor: '#3b82f6', tension: 0.1, pointRadius: 0, borderWidth: 2
+                }]
+            },
+            options: controlChartOptions
+        });
+
+        // Khởi tạo đồ thị Tín hiệu U_sw
+        const controlUswChart = new Chart(uswCtx, {
+            type: 'line',
+            data: {
+                labels: [0],
+                datasets: [{
+                    label: 'u_sw', data: [0], borderColor: '#f97316', tension: 0.1, pointRadius: 0, borderWidth: 2
+                }]
+            },
+            options: controlChartOptions
+        });
+
+        // Khởi tạo đồ thị Tín hiệu U tổng
+        const controlUChart = new Chart(uCtx, {
+            type: 'line',
+            data: {
+                labels: [0],
+                datasets: [{
+                    label: 'u (Tổng)', data: [0], borderColor: '#22c55e', tension: 0.1, pointRadius: 0, borderWidth: 2
+                }]
+            },
+            options: controlChartOptions
         });
 
         // --- HÀM CẬP NHẬT ĐƯỜNG MẶT TRƯỢT S=0 ---
@@ -542,13 +627,16 @@
             document.getElementById('eq-u').textContent = `${f(u_eq)} + ${f(u_sw)}`;
             document.getElementById('calc-u').textContent = f(u);
 
-            return u;
+            return { u, u_eq, u_sw };
         }
 
         // --- HÀM THỰC THI 1 BƯỚC MÔ PHỎNG (EULER INTEGRATION) ---
         function stepSimulation() {
             // Lấy tín hiệu điều khiển u từ hàm tính toán
-            let u = calculateAndRenderMath();
+            let ctrl = calculateAndRenderMath();
+            let u = ctrl.u;
+            let u_eq = ctrl.u_eq;
+            let u_sw = ctrl.u_sw;
             
             // Tính lại biến mặt trượt s hiện tại để cập nhật v_sta cho STA
             let e = x - xd;
@@ -602,19 +690,51 @@
             let timeDataX = timeChart.data.datasets[0].data;
             let timeDataXd = timeChart.data.datasets[1].data;
             
-            timeLabels.push(t.toFixed(2));
+            let ueqLabels = controlUeqChart.data.labels;
+            let ueqData = controlUeqChart.data.datasets[0].data;
+            
+            let uswLabels = controlUswChart.data.labels;
+            let uswData = controlUswChart.data.datasets[0].data;
+            
+            let uLabels = controlUChart.data.labels;
+            let uData = controlUChart.data.datasets[0].data;
+            
+            let t_str = t.toFixed(2);
+
+            timeLabels.push(t_str);
             timeDataX.push(x);
             timeDataXd.push(xd);
+            
+            ueqLabels.push(t_str);
+            ueqData.push(u_eq);
+            
+            uswLabels.push(t_str);
+            uswData.push(u_sw);
+            
+            uLabels.push(t_str);
+            uData.push(u);
             
             if(timeLabels.length > maxPoints) {
                 timeLabels.shift();
                 timeDataX.shift();
                 timeDataXd.shift();
+                
+                ueqLabels.shift();
+                ueqData.shift();
+                
+                uswLabels.shift();
+                uswData.shift();
+                
+                uLabels.shift();
+                uData.shift();
             }
 
             // Cập nhật lên canvas
             stateChart.update();
             timeChart.update();
+            controlUeqChart.update();
+            controlUswChart.update();
+            controlUChart.update();
             
             if (surfaceType === 'linear') {
                 phaseChart.update();
@@ -684,6 +804,17 @@
 
         // --- SỰ KIỆN GIAO DIỆN ---
         
+        // Lắng nghe thay đổi ẩn/hiện đồ thị tín hiệu
+        document.getElementById('toggle-ueq').addEventListener('change', (e) => {
+            document.getElementById('container-ueq').classList.toggle('hidden', !e.target.checked);
+        });
+        document.getElementById('toggle-usw').addEventListener('change', (e) => {
+            document.getElementById('container-usw').classList.toggle('hidden', !e.target.checked);
+        });
+        document.getElementById('toggle-u').addEventListener('change', (e) => {
+            document.getElementById('container-u').classList.toggle('hidden', !e.target.checked);
+        });
+
         // Lắng nghe thay đổi loại mặt trượt
         document.querySelectorAll('input[name="surface_type"]').forEach(radio => {
             radio.addEventListener('change', (e) => {
@@ -814,18 +945,40 @@
             timeChart.data.datasets[0].data = [0];
             timeChart.data.datasets[1].data = [xd];
             
+            controlUeqChart.data.labels = [0];
+            controlUswChart.data.labels = [0];
+            controlUChart.data.labels = [0];
+            
             stateChart.update();
             phaseChart.update();
             timeChart.update();
             
             updateSlidingSurfaceLine();
-            calculateAndRenderMath(); // Tính lại bước 0
+            let resetControl = calculateAndRenderMath(); // Tính lại bước 0
+            
+            controlUeqChart.data.datasets[0].data = [resetControl.u_eq];
+            controlUeqChart.update();
+            
+            controlUswChart.data.datasets[0].data = [resetControl.u_sw];
+            controlUswChart.update();
+            
+            controlUChart.data.datasets[0].data = [resetControl.u];
+            controlUChart.update();
         });
 
         // Khởi tạo lần đầu
         updateVisibility();
         updateSlidingSurfaceLine();
-        calculateAndRenderMath();
+        let initialControl = calculateAndRenderMath();
+        
+        controlUeqChart.data.datasets[0].data = [initialControl.u_eq];
+        controlUeqChart.update();
+        
+        controlUswChart.data.datasets[0].data = [initialControl.u_sw];
+        controlUswChart.update();
+        
+        controlUChart.data.datasets[0].data = [initialControl.u];
+        controlUChart.update();
 
     </script>
 </body>
