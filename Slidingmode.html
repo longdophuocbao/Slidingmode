@@ -100,13 +100,17 @@
                             <button id="btn-disconnect-serial" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-1 px-2 rounded text-sm font-semibold transition hidden">Ngắt kết nối</button>
                         </div>
                         
-                        <div class="mt-3 flex items-center">
-                            <label class="inline-flex items-center cursor-pointer" title="Sử dụng dữ liệu x, v nhận từ COM thay vì mô phỏng">
+                        <div class="mt-3 flex flex-col space-y-2">
+                            <label class="inline-flex items-center cursor-pointer" title="Sử dụng dữ liệu x nhận từ COM thay vì mô phỏng">
                                 <input type="checkbox" id="toggle-hardware-mode" class="form-checkbox text-gray-600 w-5 h-5" disabled>
                                 <span class="ml-2 font-medium text-gray-700 text-sm">Chạy thực tế (Hardware Mode)</span>
                             </label>
+                            <label id="label-send-u" class="inline-flex items-center cursor-pointer hidden" title="Cho phép gửi tín hiệu điều khiển u xuống thiết bị thực">
+                                <input type="checkbox" id="toggle-send-u" class="form-checkbox text-red-600 w-5 h-5">
+                                <span class="ml-2 font-medium text-red-700 text-sm">Xuất tín hiệu ĐK (u) xuống COM</span>
+                            </label>
                         </div>
-                        <p class="text-xs text-gray-500 mt-2 font-mono">* Nhận: <code class="bg-white px-1">x,v\n</code> | Gửi: <code class="bg-white px-1">u\n</code> (Baud: 115200)</p>
+                        <p class="text-xs text-gray-500 mt-2 font-mono">* Nhận: <code class="bg-white px-1">x\n</code> | Gửi: <code class="bg-white px-1">u\n</code> (Baud: 115200)</p>
                     </div>
 
                     <!-- Thông số SOPDT -->
@@ -134,24 +138,41 @@
 
                     <!-- Lọc & Bù trễ -->
                     <div class="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <!-- Nhiễu Đo Lường -->
-                        <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-200 shadow-inner">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="font-bold text-yellow-800 text-sm">Nhiễu Đo Lường:</h3>
-                                <label class="inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="toggle-noise" class="form-checkbox text-yellow-600 w-5 h-5">
-                                </label>
-                            </div>
-                            <div class="space-y-2" id="noise-params" style="opacity: 0.5; pointer-events: none;">
-                                <div class="flex justify-between">
-                                    <span class="text-xs text-gray-700">Biên độ \(x\):</span>
-                                    <input type="number" id="input-noise-x" step="0.01" min="0" value="0.05" class="w-16 border border-gray-300 rounded px-1 text-xs text-right">
+                        <!-- Nhiễu Đo Lường & Low-pass Filter -->
+                        <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-200 shadow-inner transition-colors duration-300" id="sensor-config-box">
+                            
+                            <!-- Chế độ Mô phỏng: Nhiễu Đo Lường -->
+                            <div id="sim-noise-config">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="font-bold text-yellow-800 text-sm">Nhiễu Đo Lường:</h3>
+                                    <label class="inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="toggle-noise" class="form-checkbox text-yellow-600 w-5 h-5">
+                                    </label>
                                 </div>
-                                <div class="flex justify-between">
-                                    <span class="text-xs text-gray-700">Biên độ \(\dot{x}\):</span>
-                                    <input type="number" id="input-noise-v" step="0.01" min="0" value="0.10" class="w-16 border border-gray-300 rounded px-1 text-xs text-right">
+                                <div class="space-y-2" id="noise-params" style="opacity: 0.5; pointer-events: none;">
+                                    <div class="flex justify-between">
+                                        <span class="text-xs text-gray-700">Biên độ \(x\):</span>
+                                        <input type="number" id="input-noise-x" step="0.01" min="0" value="0.05" class="w-16 border border-gray-300 rounded px-1 text-xs text-right">
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-xs text-gray-700">Biên độ \(\dot{x}\):</span>
+                                        <input type="number" id="input-noise-v" step="0.01" min="0" value="0.10" class="w-16 border border-gray-300 rounded px-1 text-xs text-right">
+                                    </div>
                                 </div>
                             </div>
+                            
+                            <!-- Chế độ Thực tế: Lọc Thông Thấp -->
+                            <div id="hw-filter-config" class="hidden">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h3 class="font-bold text-indigo-800 text-sm">Lọc Thông Thấp (\(\dot{x}\)):</h3>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block font-semibold text-xs text-gray-700">Hệ số lọc \(\alpha\): <span id="val-lpf" class="text-indigo-600">0.80</span></label>
+                                    <input type="range" id="input-lpf" min="0.0" max="0.99" step="0.01" value="0.80" class="w-full">
+                                    <p class="text-[10px] text-gray-500 italic leading-tight">\(v_m = \alpha \cdot v_{m-1} + (1-\alpha) \cdot v_{raw}\)</p>
+                                </div>
+                            </div>
+                            
                         </div>
 
                         <!-- Smith Predictor -->
@@ -232,7 +253,7 @@
                             <label class="block font-semibold mb-1">Hệ số tích phân STA (\(K_2\)): <span id="val-k2" class="text-blue-600">10.000</span></label>
                             <input type="range" id="input-k2" min="0.1" max="50" step="0.001" value="10.0" class="w-full">
                         </div>
-                        <div class="flex space-x-2 pt-2">
+                        <div id="sim-controls" class="flex space-x-2 pt-2">
                             <button id="btn-play" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded font-semibold transition">▶ Chạy tự động</button>
                             <button id="btn-step" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded font-semibold transition">⏭ Chạy 1 bước</button>
                             <button id="btn-reset" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded font-semibold transition">↻ Reset</button>
@@ -432,8 +453,10 @@
         
         // Cấu hình Phần cứng (Web Serial)
         let hardwareMode = false;
+        let sendUToSerial = false;
         let hw_x = 0.0;
         let hw_v = 0.0;
+        let lpf_alpha = 0.80; // Hệ số Low-pass filter
         
         let serialPort = null;
         let serialReader = null;
@@ -637,6 +660,8 @@
         // --- SERIAL API FUNCTIONS ---
         async function readSerialLoop() {
             let buffer = '';
+            let last_time = performance.now();
+            
             while (serialPort.readable && keepReading) {
                 try {
                     const { value, done } = await serialReader.read();
@@ -647,14 +672,24 @@
                     buffer = lines.pop(); // Giữ lại phần chưa hoàn chỉnh
                     
                     for (let line of lines) {
-                        let parts = line.trim().split(',');
-                        if (parts.length >= 2) {
-                            let parsedX = parseFloat(parts[0]);
-                            let parsedV = parseFloat(parts[1]);
-                            if (!isNaN(parsedX) && !isNaN(parsedV)) {
-                                hw_x = parsedX;
-                                hw_v = parsedV;
+                        let parsedX = parseFloat(line.trim());
+                        if (!isNaN(parsedX)) {
+                            // Tính thời gian thực tế giữa 2 lần nhận để tính đạo hàm chính xác
+                            let now = performance.now();
+                            let delta_t = (now - last_time) / 1000.0; // đổi sang giây
+                            
+                            if (delta_t > 0.001) { // Tránh chia cho 0 nếu dữ liệu đến quá nhanh
+                                let raw_v = (parsedX - hw_x) / delta_t;
+                                // Dùng bộ lọc thông thấp (Low-pass filter) để giảm nhiễu đạo hàm
+                                hw_v = lpf_alpha * hw_v + (1.0 - lpf_alpha) * raw_v;
+                            } else if (delta_t <= 0) {
+                                // Fallback dùng dt mô phỏng
+                                let raw_v = (parsedX - hw_x) / dt;
+                                hw_v = lpf_alpha * hw_v + (1.0 - lpf_alpha) * raw_v;
                             }
+                            
+                            hw_x = parsedX;
+                            last_time = now;
                         }
                     }
                 } catch (error) {
@@ -936,8 +971,8 @@
             let u_eq = ctrl.u_eq;
             let u_sw = ctrl.u_sw;
             
-            // Xuất tín hiệu xuống Phần cứng nếu đang kết nối
-            if (hardwareMode) {
+            // Xuất tín hiệu xuống Phần cứng nếu đang kết nối và được phép
+            if (hardwareMode && sendUToSerial) {
                 sendToSerial(u);
             }
             
@@ -1129,11 +1164,52 @@
             if(hardwareMode) {
                 document.getElementById('hardware-badge').classList.remove('hidden');
                 document.getElementById('calc-status-bottom').textContent = `Dữ liệu đo lường trực tiếp từ phần cứng COM`;
+                
+                // Hiển thị LPF, ẩn Nhiễu
+                document.getElementById('sim-noise-config').classList.add('hidden');
+                document.getElementById('hw-filter-config').classList.remove('hidden');
+                document.getElementById('sensor-config-box').classList.replace('bg-yellow-50', 'bg-indigo-50');
+                document.getElementById('sensor-config-box').classList.replace('border-yellow-200', 'border-indigo-200');
+
+                // Ẩn bộ điều khiển mô phỏng, hiện tùy chọn gửi u
+                document.getElementById('sim-controls').classList.add('hidden');
+                document.getElementById('label-send-u').classList.remove('hidden');
+
+                // Tự động chạy cập nhật giao diện
+                if (!isRunning) document.getElementById('btn-play').click();
             } else {
                 document.getElementById('hardware-badge').classList.add('hidden');
                 document.getElementById('calc-status-bottom').innerHTML = `\\(\\ddot{x} = -a_1\\dot{x} - a_2 x + b \\cdot u_{delayed}\\)`;
                 renderMathInElement(document.getElementById('calc-status-bottom'));
+                
+                // Hiển thị Nhiễu, ẩn LPF
+                document.getElementById('sim-noise-config').classList.remove('hidden');
+                document.getElementById('hw-filter-config').classList.add('hidden');
+                document.getElementById('sensor-config-box').classList.replace('bg-indigo-50', 'bg-yellow-50');
+                document.getElementById('sensor-config-box').classList.replace('border-indigo-200', 'border-yellow-200');
+
+                // Hiện lại bộ điều khiển mô phỏng, ẩn tùy chọn gửi u
+                document.getElementById('sim-controls').classList.remove('hidden');
+                document.getElementById('label-send-u').classList.add('hidden');
+
+                // Tự động dừng vòng lặp
+                if (isRunning) document.getElementById('btn-play').click();
+
+                // Reset toggle gửi u
+                document.getElementById('toggle-send-u').checked = false;
+                sendUToSerial = false;
             }
+        });
+
+        // Lắng nghe gửi tín hiệu u xuống COM
+        document.getElementById('toggle-send-u').addEventListener('change', (e) => {
+            sendUToSerial = e.target.checked;
+        });
+
+        // Lắng nghe thanh trượt LPF
+        document.getElementById('input-lpf').addEventListener('input', (e) => {
+            lpf_alpha = parseFloat(e.target.value);
+            document.getElementById('val-lpf').textContent = lpf_alpha.toFixed(2);
         });
 
         // Lắng nghe thay đổi ẩn/hiện đồ thị tín hiệu
