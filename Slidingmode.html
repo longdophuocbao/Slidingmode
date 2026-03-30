@@ -84,6 +84,31 @@
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <h2 class="text-xl font-bold mb-4 text-green-700">2. Thông số Cài đặt</h2>
                     
+                    <!-- Kết nối Phần cứng (COM Port) -->
+                    <div class="mb-4 p-4 bg-gray-100 rounded-lg border border-gray-300 shadow-inner">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-bold text-gray-800 text-sm">Kết nối Phần cứng (Web Serial API):</h3>
+                            <span id="serial-status" class="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded">Chưa kết nối</span>
+                        </div>
+                        
+                        <div id="serial-warning" class="hidden text-xs text-red-600 mb-2">
+                            Trình duyệt của bạn không hỗ trợ Web Serial API (vui lòng dùng Chrome, Edge, hoặc Opera).
+                        </div>
+
+                        <div class="flex space-x-2">
+                            <button id="btn-connect-serial" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-1 px-2 rounded text-sm font-semibold transition">🔌 Kết nối COM</button>
+                            <button id="btn-disconnect-serial" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-1 px-2 rounded text-sm font-semibold transition hidden">Ngắt kết nối</button>
+                        </div>
+                        
+                        <div class="mt-3 flex items-center">
+                            <label class="inline-flex items-center cursor-pointer" title="Sử dụng dữ liệu x, v nhận từ COM thay vì mô phỏng">
+                                <input type="checkbox" id="toggle-hardware-mode" class="form-checkbox text-gray-600 w-5 h-5" disabled>
+                                <span class="ml-2 font-medium text-gray-700 text-sm">Chạy thực tế (Hardware Mode)</span>
+                            </label>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2 font-mono">* Nhận: <code class="bg-white px-1">x,v\n</code> | Gửi: <code class="bg-white px-1">u\n</code> (Baud: 115200)</p>
+                    </div>
+
                     <!-- Thông số SOPDT -->
                     <div class="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200 shadow-inner">
                         <h3 class="font-bold text-blue-800 mb-3">Thông số Hệ thống (SOPDT):</h3>
@@ -228,7 +253,7 @@
                     
                     <div class="space-y-2 text-sm md:text-base font-mono bg-gray-50 p-4 rounded border border-gray-200">
                         <div class="calc-row">
-                            <span>1. Trạng thái ĐO LƯỜNG <span id="noise-badge" class="hidden text-xs text-yellow-600 font-bold ml-1 bg-yellow-100 px-1 rounded">(Có Nhiễu)</span>:</span>
+                            <span>1. Trạng thái ĐO LƯỜNG <span id="noise-badge" class="hidden text-xs text-yellow-600 font-bold ml-1 bg-yellow-100 px-1 rounded">(Có Nhiễu)</span><span id="hardware-badge" class="hidden text-xs text-indigo-600 font-bold ml-1 bg-indigo-100 px-1 rounded">(Phần cứng)</span>:</span>
                             <span class="text-right">\(x_m =\) <span id="calc-xm" class="highlight-value">0.000</span>, \(\dot{x}_m =\) <span id="calc-vm" class="highlight-value">0.000</span></span>
                         </div>
                         
@@ -284,7 +309,7 @@
                         </div>
                         <div class="calc-row text-xs text-gray-500 italic mt-2">
                             * Hệ thống nhận được: \(u_{delayed} = u(t-L) = \) <span id="calc-udelayed" class="font-bold">0.000</span><br>
-                            * Trạng thái THỰC TẾ mới: \(\ddot{x} = -a_1\dot{x} - a_2 x + b \cdot u_{delayed}\)
+                            * Trạng thái THỰC TẾ mới: <span id="calc-status-bottom">\(\ddot{x} = -a_1\dot{x} - a_2 x + b \cdot u_{delayed}\)</span>
                         </div>
                     </div>
                 </div>
@@ -358,6 +383,13 @@
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             renderMathInElement(document.body);
+            
+            // Check Web Serial API support
+            if (!("serial" in navigator)) {
+                document.getElementById('serial-warning').classList.remove('hidden');
+                document.getElementById('btn-connect-serial').disabled = true;
+                document.getElementById('btn-connect-serial').classList.add('opacity-50', 'cursor-not-allowed');
+            }
         });
 
         // --- CẤU HÌNH MÔ PHỎNG ---
@@ -368,7 +400,7 @@
         let v = 0.0;    // Vận tốc thực tế (x_dot)
         let t = 0.0;    // Thời gian
         
-        // Trạng thái đo lường (có thể lẫn nhiễu)
+        // Trạng thái đo lường (có thể lẫn nhiễu hoặc đến từ Serial)
         let x_m = 0.0;
         let v_m = 0.0;
 
@@ -398,6 +430,16 @@
         let noiseAmpX = 0.05;
         let noiseAmpV = 0.10;
         
+        // Cấu hình Phần cứng (Web Serial)
+        let hardwareMode = false;
+        let hw_x = 0.0;
+        let hw_v = 0.0;
+        
+        let serialPort = null;
+        let serialReader = null;
+        let serialWriter = null;
+        let keepReading = false;
+
         // Thông số bộ điều khiển
         let xd = 10.0;
         let lambda = 2.0; // Cho Linear SMC
@@ -592,6 +634,99 @@
             options: controlUChartOptions
         });
 
+        // --- SERIAL API FUNCTIONS ---
+        async function readSerialLoop() {
+            let buffer = '';
+            while (serialPort.readable && keepReading) {
+                try {
+                    const { value, done } = await serialReader.read();
+                    if (done) break;
+                    
+                    buffer += value;
+                    let lines = buffer.split('\n');
+                    buffer = lines.pop(); // Giữ lại phần chưa hoàn chỉnh
+                    
+                    for (let line of lines) {
+                        let parts = line.trim().split(',');
+                        if (parts.length >= 2) {
+                            let parsedX = parseFloat(parts[0]);
+                            let parsedV = parseFloat(parts[1]);
+                            if (!isNaN(parsedX) && !isNaN(parsedV)) {
+                                hw_x = parsedX;
+                                hw_v = parsedV;
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Lỗi đọc Serial:', error);
+                    break;
+                }
+            }
+        }
+
+        async function sendToSerial(u_val) {
+            if (serialWriter) {
+                try {
+                    await serialWriter.write(`${u_val.toFixed(4)}\n`);
+                } catch (e) {
+                    console.error("Lỗi gửi Serial", e);
+                }
+            }
+        }
+
+        document.getElementById('btn-connect-serial').addEventListener('click', async () => {
+            try {
+                serialPort = await navigator.serial.requestPort();
+                await serialPort.open({ baudRate: 115200 });
+                
+                const textDecoder = new TextDecoderStream();
+                const readableStreamClosed = serialPort.readable.pipeTo(textDecoder.writable);
+                serialReader = textDecoder.readable.getReader();
+
+                const textEncoder = new TextEncoderStream();
+                const writableStreamClosed = textEncoder.readable.pipeTo(serialPort.writable);
+                serialWriter = textEncoder.writable.getWriter();
+
+                document.getElementById('serial-status').textContent = 'Đã kết nối';
+                document.getElementById('serial-status').className = 'px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded';
+                document.getElementById('btn-connect-serial').classList.add('hidden');
+                document.getElementById('btn-disconnect-serial').classList.remove('hidden');
+                document.getElementById('toggle-hardware-mode').disabled = false;
+
+                keepReading = true;
+                readSerialLoop(); // Bắt đầu vòng lặp đọc background
+            } catch (err) {
+                console.error('Lỗi kết nối Serial:', err);
+                alert('Không thể kết nối cổng COM: ' + err.message);
+            }
+        });
+
+        document.getElementById('btn-disconnect-serial').addEventListener('click', async () => {
+            try {
+                keepReading = false;
+                if (serialReader) { await serialReader.cancel(); serialReader = null; }
+                if (serialWriter) { await serialWriter.close(); serialWriter = null; }
+                if (serialPort) { await serialPort.close(); serialPort = null; }
+                
+                // Cập nhật UI
+                document.getElementById('serial-status').textContent = 'Chưa kết nối';
+                document.getElementById('serial-status').className = 'px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded';
+                document.getElementById('btn-connect-serial').classList.remove('hidden');
+                document.getElementById('btn-disconnect-serial').classList.add('hidden');
+                
+                let hwToggle = document.getElementById('toggle-hardware-mode');
+                hwToggle.checked = false;
+                hwToggle.disabled = true;
+                
+                // Kích hoạt sự kiện change để tắt chế độ Hardware Mode
+                const event = new Event('change');
+                hwToggle.dispatchEvent(event);
+
+            } catch (err) {
+                console.error('Lỗi khi đóng Serial:', err);
+            }
+        });
+
         // --- HÀM CẬP NHẬT ĐƯỜNG MẶT TRƯỢT S=0 ---
         function updateSlidingSurfaceLine() {
             // Mở rộng giới hạn vẽ để bao phủ sai số lớn (tới 20)
@@ -773,16 +908,26 @@
             return { u, u_eq, u_sw, s, sgn_s, e_ctrl, de_ctrl };
         }
 
-        // --- HÀM THỰC THI 1 BƯỚC MÔ PHỎNG (EULER INTEGRATION) ---
+        // --- HÀM THỰC THI 1 BƯỚC MÔ PHỎNG (EULER INTEGRATION HOẶC HARDWARE) ---
         function stepSimulation() {
-            // 1. Sinh nhiễu cho giá trị đo lường
-            if (noiseEnabled) {
-                // Nhiễu phân bố đều: (random - 0.5) * 2 * biên_độ
-                x_m = x + (Math.random() * 2 - 1) * noiseAmpX;
-                v_m = v + (Math.random() * 2 - 1) * noiseAmpV;
+            
+            // 1. Cập nhật dữ liệu từ Phần cứng hoặc Mô phỏng
+            if (hardwareMode) {
+                // Nhận giá trị thực từ Phần cứng (đã cập nhật qua readSerialLoop)
+                x_m = hw_x;
+                v_m = hw_v;
+                // Giả định trạng thái THỰC x/v cho mục đích vẽ đồ thị là giá trị đo được
+                x = x_m;
+                v = v_m;
             } else {
-                x_m = x;
-                v_m = v;
+                // Sinh nhiễu mô phỏng (nếu bật)
+                if (noiseEnabled) {
+                    x_m = x + (Math.random() * 2 - 1) * noiseAmpX;
+                    v_m = v + (Math.random() * 2 - 1) * noiseAmpV;
+                } else {
+                    x_m = x;
+                    v_m = v;
+                }
             }
 
             // 2. Lấy tín hiệu điều khiển u từ hàm tính toán
@@ -790,6 +935,11 @@
             let u = ctrl.u;
             let u_eq = ctrl.u_eq;
             let u_sw = ctrl.u_sw;
+            
+            // Xuất tín hiệu xuống Phần cứng nếu đang kết nối
+            if (hardwareMode) {
+                sendToSerial(u);
+            }
             
             // Cập nhật trạng thái tích phân của Super-Twisting (v_sta) bằng sgn_s từ dữ liệu ĐIỀU KHIỂN
             if (reachingType === 'super_twisting') {
@@ -816,18 +966,20 @@
                 v_bar += a_bar * dt;
             }
 
-            // 5. Phương trình động lực học THỰC TẾ SOPDT
-            let a = -a1 * v - a2 * x + b_sys * u_delayed;
+            // 5. Cập nhật Phương trình động lực học (chỉ áp dụng nếu chạy Mô Phỏng Nội Bộ)
+            if (!hardwareMode) {
+                let a = -a1 * v - a2 * x + b_sys * u_delayed;
+                // Cập nhật trạng thái thực mô phỏng (Euler)
+                x = x + v * dt;
+                v = v + a * dt;
+            }
             
-            // Cập nhật trạng thái thực (Phương pháp Euler)
-            x = x + v * dt;
-            v = v + a * dt;
             t = t + dt;
             
             // Cập nhật tích phân sai số ĐIỀU KHIỂN cho bước tiếp theo
             int_e = int_e + ctrl.e_ctrl * dt;
 
-            // 6. Cập nhật đồ thị (Vẽ trạng thái THỰC và Sai số ĐIỀU KHIỂN)
+            // 6. Cập nhật đồ thị
             renderFrame++;
             const maxPoints = 300;
             
@@ -971,6 +1123,19 @@
 
         // --- SỰ KIỆN GIAO DIỆN ---
         
+        // Lắng nghe thay đổi phần cứng
+        document.getElementById('toggle-hardware-mode').addEventListener('change', (e) => {
+            hardwareMode = e.target.checked;
+            if(hardwareMode) {
+                document.getElementById('hardware-badge').classList.remove('hidden');
+                document.getElementById('calc-status-bottom').textContent = `Dữ liệu đo lường trực tiếp từ phần cứng COM`;
+            } else {
+                document.getElementById('hardware-badge').classList.add('hidden');
+                document.getElementById('calc-status-bottom').innerHTML = `\\(\\ddot{x} = -a_1\\dot{x} - a_2 x + b \\cdot u_{delayed}\\)`;
+                renderMathInElement(document.getElementById('calc-status-bottom'));
+            }
+        });
+
         // Lắng nghe thay đổi ẩn/hiện đồ thị tín hiệu
         document.getElementById('toggle-ueq').addEventListener('change', (e) => {
             document.getElementById('container-ueq').classList.toggle('hidden', !e.target.checked);
@@ -1156,8 +1321,12 @@
             x = 0.0;
             v = 0.0;
             t = 0.0;
-            x_m = 0.0;
-            v_m = 0.0;
+            
+            if (!hardwareMode) {
+                x_m = 0.0;
+                v_m = 0.0;
+            }
+            
             x_ctrl = 0.0;
             v_ctrl = 0.0;
             x_hat = 0.0;
