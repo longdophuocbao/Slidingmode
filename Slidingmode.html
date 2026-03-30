@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tương tác Điều khiển Trượt (Sliding Mode Control)</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- KaTeX cho công thức toán học -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Plotly.js cho đồ thị 3D -->
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .math-block { background-color: #ffffff; padding: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1rem; }
+        .calc-row { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #e5e7eb; }
+        .calc-row:last-child { border-bottom: none; }
+        .calc-row.hidden { display: none !important; }
+        .katex { font-size: 1.1em; }
+        .highlight-value { font-weight: bold; color: #2563eb; }
+    </style>
+</head>
+<body class="text-gray-800 p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto space-y-6">
+        
+        <!-- Header -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Mô phỏng & Tính toán Điều khiển Trượt (SMC)</h1>
+            <p class="text-gray-600">Minh họa thuật toán Sliding Mode Control cho hệ phi tuyến: <strong>Con lắc đơn giản</strong>. Khám phá cách các phương trình được tính toán ở từng bước mô phỏng (Step-by-step).</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Cột trái: Lý thuyết & Bảng điều khiển -->
+            <div class="lg:col-span-5 space-y-6">
+                
+                <!-- Lý thuyết -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h2 class="text-xl font-bold mb-4 text-blue-700">1. Mô hình Toán học</h2>
+                    <div class="text-sm space-y-3">
+                        <p>Hệ thống: \(\ddot{x} = -\sin(x) + u\) (Hệ phi tuyến)</p>
+                        <p>Mục tiêu: Đưa vị trí \(x\) về giá trị đặt \(x_d\).</p>
+                        <p>Sai số: \(e = x - x_d \)</p>
+                        <p>Đạo hàm sai số: \(\dot{e} = \dot{x}\) (vì \(x_d\) là hằng số)</p>
+                        <hr class="my-2">
+                        
+                        <!-- Lý thuyết Tuyến tính -->
+                        <div id="theory-linear">
+                            <h3 class="font-bold text-gray-700">Thiết kế SMC (Mặt trượt Tuyến tính):</h3>
+                            <p>1. Chọn mặt trượt: \(s = \dot{e} + \lambda e = 0\) (với \(\lambda > 0\))</p>
+                            <p>2. Đạo hàm mặt trượt: \(\dot{s} = \ddot{e} + \lambda \dot{e} = -\sin(x) + u + \lambda \dot{x}\)</p>
+                            <p class="law-sign">3. Chọn luật tiến về mặt trượt: \(\dot{s} = -K \text{sgn}(s)\)</p>
+                            <p class="law-sta hidden">3. Chọn luật tiến về mặt trượt: \(\dot{s} = -K \sqrt{|s|} \text{sgn}(s) + v\) (với \(\dot{v} = -K_2 \text{sgn}(s)\))</p>
+                            <p class="law-sign">4. Tín hiệu điều khiển: \(u = \underbrace{\sin(x) - \lambda \dot{x}}_{u_{eq}} \underbrace{- K \text{sgn}(s)}_{u_{sw}}\)</p>
+                            <p class="law-sta hidden">4. Tín hiệu điều khiển: \(u = \underbrace{\sin(x) - \lambda \dot{x}}_{u_{eq}} \underbrace{- K \sqrt{|s|} \text{sgn}(s) + v}_{u_{sw}}\)</p>
+                        </div>
+
+                        <!-- Lý thuyết PID -->
+                        <div id="theory-pid" class="hidden">
+                            <h3 class="font-bold text-gray-700">Thiết kế SMC (Mặt trượt PID):</h3>
+                            <p>1. Chọn mặt trượt: \(s = K_p e + K_i \int e dt + K_d \dot{e} = 0\)</p>
+                            <p>2. Đạo hàm mặt trượt: \(\dot{s} = K_p \dot{e} + K_i e + K_d \ddot{e} = K_p \dot{x} + K_i e + K_d (-\sin(x) + u)\)</p>
+                            <p class="law-sign">3. Chọn luật tiến về mặt trượt: \(\dot{s} = -K \text{sgn}(s)\)</p>
+                            <p class="law-sta hidden">3. Chọn luật tiến về mặt trượt: \(\dot{s} = -K \sqrt{|s|} \text{sgn}(s) + v\) (với \(\dot{v} = -K_2 \text{sgn}(s)\))</p>
+                            <p class="law-sign">4. Tín hiệu điều khiển: \(u = \underbrace{\sin(x) - \frac{K_p}{K_d}\dot{x} - \frac{K_i}{K_d}e}_{u_{eq}} \underbrace{- \frac{K}{K_d} \text{sgn}(s)}_{u_{sw}}\)</p>
+                            <p class="law-sta hidden">4. Tín hiệu điều khiển: \(u = \underbrace{\sin(x) - \frac{K_p}{K_d}\dot{x} - \frac{K_i}{K_d}e}_{u_{eq}} \underbrace{+ \frac{1}{K_d}(-K \sqrt{|s|} \text{sgn}(s) + v)}_{u_{sw}}\)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bảng điều khiển -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h2 class="text-xl font-bold mb-4 text-green-700">2. Thông số Cài đặt</h2>
+                    
+                    <!-- Switch chọn mặt trượt -->
+                    <div class="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <label class="block font-semibold mb-2 text-gray-700">Loại Mặt Trượt:</label>
+                        <div class="flex flex-col sm:flex-row sm:space-x-6 space-y-2 sm:space-y-0">
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="radio" name="surface_type" value="linear" class="form-radio text-blue-600 w-5 h-5" checked>
+                                <span class="ml-2 font-medium">Tuyến tính (Linear)</span>
+                            </label>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="radio" name="surface_type" value="pid" class="form-radio text-green-600 w-5 h-5">
+                                <span class="ml-2 font-medium">PID</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Switch chọn luật chuyển mạch -->
+                    <div class="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <label class="block font-semibold mb-2 text-gray-700">Luật Chuyển Mạch:</label>
+                        <div class="flex flex-col sm:flex-row sm:space-x-6 space-y-2 sm:space-y-0">
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="radio" name="reaching_type" value="sign" class="form-radio text-red-600 w-5 h-5" checked>
+                                <span class="ml-2 font-medium">Hàm Dấu (Sign)</span>
+                            </label>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="radio" name="reaching_type" value="super_twisting" class="form-radio text-purple-600 w-5 h-5">
+                                <span class="ml-2 font-medium">Super-Twisting (STA)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 text-sm">
+                        <div>
+                            <label class="block font-semibold mb-1">Vị trí mong muốn (\(x_d\)): <span id="val-xd" class="text-blue-600">2.0</span> rad</label>
+                            <input type="range" id="input-xd" min="-3" max="3" step="0.1" value="2.0" class="w-full">
+                        </div>
+                        
+                        <!-- Params Linear -->
+                        <div id="params-linear">
+                            <label class="block font-semibold mb-1">Độ dốc mặt trượt (\(\lambda\)): <span id="val-lambda" class="text-blue-600">2.0</span></label>
+                            <input type="range" id="input-lambda" min="0.5" max="5" step="0.1" value="2.0" class="w-full">
+                        </div>
+
+                        <!-- Params PID -->
+                        <div id="params-pid" class="hidden grid grid-cols-3 gap-2">
+                            <div>
+                                <label class="block font-semibold mb-1">\(K_p\): <span id="val-kp" class="text-blue-600">2.0</span></label>
+                                <input type="range" id="input-kp" min="0.1" max="10" step="0.1" value="2.0" class="w-full">
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-1">\(K_i\): <span id="val-ki" class="text-blue-600">0.5</span></label>
+                                <input type="range" id="input-ki" min="0.0" max="5" step="0.1" value="0.5" class="w-full">
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-1">\(K_d\): <span id="val-kd" class="text-blue-600">1.0</span></label>
+                                <input type="range" id="input-kd" min="0.1" max="5" step="0.1" value="1.0" class="w-full">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block font-semibold mb-1">Hệ số chuyển mạch (\(K\)): <span id="val-k" class="text-blue-600">5.0</span></label>
+                            <input type="range" id="input-k" min="0.1" max="15" step="0.1" value="5.0" class="w-full">
+                        </div>
+                        <!-- Params Super-Twisting -->
+                        <div id="params-sta" class="hidden">
+                            <label class="block font-semibold mb-1">Hệ số tích phân STA (\(K_2\)): <span id="val-k2" class="text-blue-600">10.0</span></label>
+                            <input type="range" id="input-k2" min="0.1" max="50" step="0.1" value="10.0" class="w-full">
+                        </div>
+                        <div class="flex space-x-2 pt-2">
+                            <button id="btn-play" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded font-semibold transition">▶ Chạy tự động</button>
+                            <button id="btn-step" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded font-semibold transition">⏭ Chạy 1 bước (Step)</button>
+                            <button id="btn-reset" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded font-semibold transition">↻ Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột phải: Tính toán Live & Đồ thị -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- Tính toán từng bước -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-blue-200 ring-2 ring-blue-50">
+                    <h2 class="text-xl font-bold mb-4 text-purple-700 flex justify-between items-center">
+                        <span>3. Phân tích Phép tính (T= <span id="t-val">0.00</span>s)</span>
+                        <span class="text-xs font-normal bg-purple-100 text-purple-800 px-2 py-1 rounded-full">dt = 0.02s</span>
+                    </h2>
+                    
+                    <div class="space-y-2 text-sm md:text-base font-mono bg-gray-50 p-4 rounded border border-gray-200">
+                        <div class="calc-row">
+                            <span>1. Trạng thái hiện tại:</span>
+                            <span class="text-right">\(x =\) <span id="calc-x" class="highlight-value">0.000</span>, \(\dot{x} =\) <span id="calc-v" class="highlight-value">0.000</span></span>
+                        </div>
+                        <div class="calc-row">
+                            <span>2. Sai số (\(e = x - x_d\)):</span>
+                            <span class="text-right"><span id="eq-e">0.000 - 2.000</span> = <span id="calc-e" class="highlight-value text-red-600">-2.000</span></span>
+                        </div>
+                        <div class="calc-row hidden" id="row-inte">
+                            <span>* Tích phân sai số (\(\int e dt\)):</span>
+                            <span class="text-right">\(\sum e \cdot dt =\) <span id="calc-inte" class="highlight-value text-amber-600">0.000</span></span>
+                        </div>
+                        <div class="calc-row">
+                            <span>3. Đạo hàm sai số (\(\dot{e}\)):</span>
+                            <span class="text-right">\(\dot{e} = \dot{x} =\) <span id="calc-de" class="highlight-value text-red-600">0.000</span></span>
+                        </div>
+                        <div class="calc-row bg-blue-50 p-2 rounded -mx-2 px-2">
+                            <span class="font-bold">
+                                <span class="label-linear">4. Mặt trượt (\(s = \dot{e} + \lambda e\)):</span>
+                                <span class="label-pid hidden">4. Mặt trượt (\(s = K_p e + K_i \int e dt + K_d \dot{e}\)):</span>
+                            </span>
+                            <span class="text-right"><span id="eq-s">...</span> = <span id="calc-s" class="highlight-value text-blue-700">-4.000</span></span>
+                        </div>
+                        <div class="calc-row hidden" id="row-vsta">
+                            <span>* Trạng thái STA (\(v\)):</span>
+                            <span class="text-right">\(\sum -K_2 \text{sgn}(s) dt =\) <span id="calc-vsta" class="highlight-value text-purple-600">0.000</span></span>
+                        </div>
+                        <div class="calc-row">
+                            <span>
+                                <span class="label-linear">5. ĐK tương đương (\(u_{eq} = \sin(x) - \lambda\dot{x}\)):</span>
+                                <span class="label-pid hidden">5. ĐK tương đương (\(u_{eq} = \sin(x) - \frac{K_p}{K_d}\dot{x} - \frac{K_i}{K_d}e\)):</span>
+                            </span>
+                            <span class="text-right"><span id="eq-ueq">...</span> = <span id="calc-ueq" class="highlight-value">0.000</span></span>
+                        </div>
+                        <div class="calc-row">
+                            <span>
+                                <span class="label-usw hidden" id="label-usw-linear-sign">6. ĐK chuyển mạch (\(u_{sw} = -K\text{sgn}(s)\)):</span>
+                                <span class="label-usw hidden" id="label-usw-linear-super_twisting">6. ĐK chuyển mạch (\(u_{sw} = -K\sqrt{|s|}\text{sgn}(s) + v\)):</span>
+                                <span class="label-usw hidden" id="label-usw-pid-sign">6. ĐK chuyển mạch (\(u_{sw} = -\frac{K}{K_d}\text{sgn}(s)\)):</span>
+                                <span class="label-usw hidden" id="label-usw-pid-super_twisting">6. ĐK chuyển mạch (\(u_{sw} = \frac{1}{K_d}(-K\sqrt{|s|}\text{sgn}(s) + v)\)):</span>
+                            </span>
+                            <span class="text-right"><span id="eq-usw">...</span> = <span id="calc-usw" class="highlight-value text-orange-600">5.000</span></span>
+                        </div>
+                        <div class="calc-row bg-green-50 p-2 rounded -mx-2 px-2 border-t-2 border-green-200">
+                            <span class="font-bold text-green-800">7. Tín hiệu tổng (\(u = u_{eq} + u_{sw}\)):</span>
+                            <span class="text-right"><span id="eq-u">0.000 + 5.000</span> = <span id="calc-u" class="text-lg font-bold text-green-700">5.000</span></span>
+                        </div>
+                        <div class="calc-row text-xs text-gray-500 italic mt-2">
+                            * Trạng thái mới: \( \ddot{x} = -\sin(x) + u \). \(x_{new} = x + \dot{x}dt\), \(\dot{x}_{new} = \dot{x} + \ddot{x}dt\)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Đồ thị -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-center text-gray-700 mb-2">Mặt phẳng trạng thái (x, \(\dot{x}\))</h3>
+                        <canvas id="stateChart" height="250"></canvas>
+                        <p class="text-xs text-center text-gray-500 mt-2">Trục X: Vị trí \(x\) | Trục Y: Vận tốc \(\dot{x}\)<br>Dấu thập: Vị trí đích đến \(x_d\)</p>
+                    </div>
+                    
+                    <!-- Container Quỹ đạo 2D (Linear) -->
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100" id="phase2d-container">
+                        <h3 class="font-bold text-center text-gray-700 mb-2">Quỹ đạo sai số (e, \(\dot{e}\))</h3>
+                        <canvas id="phaseChart" height="250"></canvas>
+                        <p class="text-xs text-center text-gray-500 mt-2">Trục X: Sai số \(e\) | Trục Y: \(\dot{e}\)<br>Đường đứt nét: Mặt trượt \(s = 0\)</p>
+                    </div>
+
+                    <!-- Container Quỹ đạo 3D (PID) -->
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hidden" id="phase3d-container">
+                        <h3 class="font-bold text-center text-gray-700 mb-2">Mặt trượt 3D (PID)</h3>
+                        <div id="phase3dChart" style="height: 250px; width: 100%;"></div>
+                        <p class="text-xs text-center text-gray-500 mt-2">X: Sai số \(e\) | Y: Tích phân \(\int e\) | Z: Đạo hàm \(\dot{e}\)</p>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2">
+                        <h3 class="font-bold text-center text-gray-700 mb-2">Đáp ứng thời gian (Time Response)</h3>
+                        <canvas id="timeChart" height="200"></canvas>
+                        <p class="text-xs text-center text-gray-500 mt-2">Theo dõi Vị trí \(x\) tiến về \(x_d\)</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body);
+        });
+
+        // --- CẤU HÌNH MÔ PHỎNG ---
+        let surfaceType = 'linear'; // Lựa chọn: 'linear' hoặc 'pid'
+        let reachingType = 'sign';  // Lựa chọn: 'sign' hoặc 'super_twisting'
+
+        let x = 0.0;    // Vị trí
+        let v = 0.0;    // Vận tốc (x_dot)
+        let t = 0.0;    // Thời gian
+        let int_e = 0.0; // Tích phân sai số
+        let v_sta = 0.0; // Biến trạng thái tích phân của Super-Twisting
+        const dt = 0.02; // Bước nhảy thời gian (để biểu diễn rõ từng bước)
+        
+        // Thông số bộ điều khiển (mặc định)
+        let xd = 2.0;
+        let lambda = 2.0; // Cho Linear SMC
+        let kp = 2.0;     // Cho PID SMC
+        let ki = 0.5;
+        let kd = 1.0;
+        let K = 5.0;
+        let K2 = 10.0;    // Hệ số cho trạng thái tích phân STA
+
+        let isRunning = false;
+        let simulationInterval;
+        let renderFrame = 0; // Biến đếm khung hình để tối ưu vẽ 3D
+
+        // --- ĐỒ THỊ (Chart.js & Plotly) ---
+        const stateCtx = document.getElementById('stateChart').getContext('2d');
+        const phaseCtx = document.getElementById('phaseChart').getContext('2d');
+        const timeCtx = document.getElementById('timeChart').getContext('2d');
+
+        // Plotly 3D Variables
+        let isPlotlyInitialized = false;
+        let pidTrajectory = { x: [-xd], y: [0], z: [0] };
+
+        // Khởi tạo đồ thị Trạng thái (x, x dot)
+        const stateChart = new Chart(stateCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: 'Quỹ đạo (x, x_dot)',
+                        data: [{x: 0, y: 0}], // ban đầu x=0, v=0
+                        borderColor: '#8b5cf6', // purple-500
+                        backgroundColor: '#8b5cf6',
+                        showLine: true,
+                        pointRadius: 2,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Điểm đích x_d',
+                        data: [{x: xd, y: 0}], // mục tiêu: vị trí xd, vận tốc 0
+                        borderColor: '#10b981', // green-500
+                        backgroundColor: '#10b981',
+                        pointStyle: 'crossRot',
+                        pointRadius: 6,
+                        borderWidth: 3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                animation: false,
+                scales: {
+                    x: { title: { display: true, text: 'Vị trí (x)' } },
+                    y: { title: { display: true, text: 'Vận tốc (x dot)' } }
+                }
+            }
+        });
+
+        // Khởi tạo đồ thị Pha (Phase Portrait)
+        const phaseChart = new Chart(phaseCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: 'Quỹ đạo trạng thái',
+                        data: [{x: -xd, y: 0}], // ban đầu e = 0 - xd
+                        borderColor: '#ef4444', // red-500
+                        backgroundColor: '#ef4444',
+                        showLine: true,
+                        pointRadius: 2,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Mặt trượt s=0',
+                        data: [],
+                        borderColor: '#3b82f6', // blue-500
+                        borderDash: [5, 5],
+                        showLine: true,
+                        pointRadius: 0,
+                        borderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                animation: false,
+                scales: {
+                    x: { title: { display: true, text: 'Sai số (e)' } },
+                    y: { title: { display: true, text: 'Đạo hàm sai số (e dot)' } }
+                }
+            }
+        });
+
+        // Khởi tạo đồ thị Thời gian
+        const timeChart = new Chart(timeCtx, {
+            type: 'line',
+            data: {
+                labels: [0],
+                datasets: [
+                    {
+                        label: 'Vị trí x(t)',
+                        data: [x],
+                        borderColor: '#10b981', // green-500
+                        tension: 0.1,
+                        pointRadius: 0
+                    },
+                    {
+                        label: 'Vị trí đặt x_d',
+                        data: [xd],
+                        borderColor: '#6b7280', // gray-500
+                        borderDash: [2, 2],
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                animation: false,
+                scales: {
+                    x: { title: { display: true, text: 'Thời gian t (s)' } },
+                    y: { title: { display: true, text: 'Giá trị' } }
+                }
+            }
+        });
+
+        // --- HÀM CẬP NHẬT ĐƯỜNG MẶT TRƯỢT S=0 ---
+        function updateSlidingSurfaceLine() {
+            const e_min = -5;
+            const e_max = 5;
+            
+            if (surfaceType === 'linear') {
+                // Đường thẳng: e_dot = -lambda * e
+                phaseChart.data.datasets[1].data = [
+                    {x: e_min, y: -lambda * e_min},
+                    {x: e_max, y: -lambda * e_max}
+                ];
+            }
+            phaseChart.update();
+        }
+
+        // --- HÀM KHỞI TẠO VÀ CẬP NHẬT ĐỒ THỊ 3D (PLOTLY) ---
+        function initPlotly() {
+            let e_vals = [-5, 5];
+            let int_e_vals = [-5, 5];
+            // Tính toán mặt phẳng z (e_dot) = -(Kp/Kd)*e - (Ki/Kd)*int_e
+            let z_vals = [
+                [ -(kp/kd)*(-5) - (ki/kd)*(-5), -(kp/kd)*(5) - (ki/kd)*(-5) ],
+                [ -(kp/kd)*(-5) - (ki/kd)*(5),  -(kp/kd)*(5) - (ki/kd)*(5) ]
+            ];
+
+            let surfaceTrace = {
+                x: e_vals,
+                y: int_e_vals,
+                z: z_vals,
+                type: 'surface',
+                opacity: 0.5,
+                colorscale: 'Blues',
+                showscale: false,
+                name: 'Mặt s=0'
+            };
+
+            let trajTrace = {
+                x: pidTrajectory.x,
+                y: pidTrajectory.y,
+                z: pidTrajectory.z,
+                type: 'scatter3d',
+                mode: 'lines',
+                line: { color: '#ef4444', width: 4 },
+                name: 'Quỹ đạo'
+            };
+
+            let layout = {
+                margin: { l: 0, r: 0, b: 0, t: 10 },
+                scene: {
+                    xaxis: { title: 'e' },
+                    yaxis: { title: '∫e' },
+                    zaxis: { title: 'ė' },
+                    camera: { eye: {x: 1.5, y: 1.5, z: 0.5} }
+                },
+                showlegend: false
+            };
+
+            Plotly.newPlot('phase3dChart', [surfaceTrace, trajTrace], layout, {responsive: true});
+            isPlotlyInitialized = true;
+        }
+
+        function updatePlotlySurface() {
+            if (!isPlotlyInitialized) return;
+            let z_vals = [
+                [ -(kp/kd)*(-5) - (ki/kd)*(-5), -(kp/kd)*(5) - (ki/kd)*(-5) ],
+                [ -(kp/kd)*(-5) - (ki/kd)*(5),  -(kp/kd)*(5) - (ki/kd)*(5) ]
+            ];
+            Plotly.update('phase3dChart', { z: [z_vals] }, {}, [0]);
+        }
+
+        // --- HÀM TÍNH TOÁN & CẬP NHẬT GIAO DIỆN TỪNG BƯỚC ---
+        function calculateAndRenderMath() {
+            // 1. Tính các giá trị
+            let e = x - xd;
+            let de = v;
+            let s, u_eq, u_sw, u;
+            
+            let sgn_s;
+            
+            if (surfaceType === 'linear') {
+                s = de + lambda * e;
+                u_eq = Math.sin(x) - lambda * v;
+                sgn_s = s > 0 ? 1 : (s < 0 ? -1 : 0);
+                
+                if (reachingType === 'sign') {
+                    u_sw = -K * sgn_s;
+                } else {
+                    u_sw = -K * Math.sqrt(Math.abs(s)) * sgn_s + v_sta;
+                }
+                
+                u = u_eq + u_sw;
+            } else {
+                s = kp * e + ki * int_e + kd * de;
+                u_eq = Math.sin(x) - (kp/kd) * v - (ki/kd) * e;
+                sgn_s = s > 0 ? 1 : (s < 0 ? -1 : 0);
+                
+                if (reachingType === 'sign') {
+                    u_sw = -(K/kd) * sgn_s;
+                } else {
+                    u_sw = (-K * Math.sqrt(Math.abs(s)) * sgn_s + v_sta) / kd;
+                }
+                
+                u = u_eq + u_sw;
+            }
+
+            // --- ĐỊNH DẠNG ĐỂ HIỂN THỊ TRÊN GIAO DIỆN ---
+            const f = (val) => val.toFixed(3); // format 3 chữ số
+            
+            document.getElementById('t-val').textContent = f(t);
+            
+            document.getElementById('calc-x').textContent = f(x);
+            document.getElementById('calc-v').textContent = f(v);
+            
+            document.getElementById('eq-e').textContent = `${f(x)} - ${f(xd)}`;
+            document.getElementById('calc-e').textContent = f(e);
+            
+            document.getElementById('calc-inte').textContent = f(int_e);
+            document.getElementById('calc-vsta').textContent = f(v_sta);
+            
+            document.getElementById('calc-de').textContent = f(de);
+            
+            if (surfaceType === 'linear') {
+                document.getElementById('eq-s').textContent = `${f(de)} + ${f(lambda)}(${f(e)})`;
+                document.getElementById('eq-ueq').textContent = `sin(${f(x)}) - ${f(lambda)}(${f(v)})`;
+                
+                if (reachingType === 'sign') {
+                    document.getElementById('eq-usw').textContent = `-${f(K)} × sgn(${f(s)})`;
+                } else {
+                    document.getElementById('eq-usw').textContent = `-${f(K)}√|${f(s)}|sgn(${f(s)}) + ${f(v_sta)}`;
+                }
+            } else {
+                document.getElementById('eq-s').textContent = `${f(kp)}(${f(e)}) + ${f(ki)}(${f(int_e)}) + ${f(kd)}(${f(de)})`;
+                document.getElementById('eq-ueq').textContent = `sin(${f(x)}) - ${f(kp/kd)}(${f(v)}) - ${f(ki/kd)}(${f(e)})`;
+                
+                if (reachingType === 'sign') {
+                    document.getElementById('eq-usw').textContent = `-${f(K/kd)} × sgn(${f(s)})`;
+                } else {
+                    document.getElementById('eq-usw').textContent = `(-${f(K)}√|${f(s)}|sgn(${f(s)}) + ${f(v_sta)}) / ${f(kd)}`;
+                }
+            }
+            
+            document.getElementById('calc-s').textContent = f(s);
+            document.getElementById('calc-ueq').textContent = f(u_eq);
+            document.getElementById('calc-usw').textContent = f(u_sw);
+            
+            document.getElementById('eq-u').textContent = `${f(u_eq)} + ${f(u_sw)}`;
+            document.getElementById('calc-u').textContent = f(u);
+
+            return u;
+        }
+
+        // --- HÀM THỰC THI 1 BƯỚC MÔ PHỎNG (EULER INTEGRATION) ---
+        function stepSimulation() {
+            // Lấy tín hiệu điều khiển u từ hàm tính toán
+            let u = calculateAndRenderMath();
+            
+            // Tính lại biến mặt trượt s hiện tại để cập nhật v_sta cho STA
+            let e = x - xd;
+            let de = v;
+            let s = (surfaceType === 'linear') ? de + lambda * e : kp * e + ki * int_e + kd * de;
+            let sgn_s = s > 0 ? 1 : (s < 0 ? -1 : 0);
+            
+            // Cập nhật trạng thái tích phân của Super-Twisting (v_sta)
+            if (reachingType === 'super_twisting') {
+                v_sta = v_sta - K2 * sgn_s * dt;
+            }
+
+            // Phương trình động lực học: x_ddot = -sin(x) + u
+            let a = -Math.sin(x) + u;
+            
+            // Cập nhật trạng thái (Phương pháp Euler)
+            x = x + v * dt;
+            v = v + a * dt;
+            t = t + dt;
+            
+            // Cập nhật tích phân sai số cho bước tiếp theo
+            int_e = int_e + e * dt;
+
+            // Cập nhật đồ thị
+            de = v;
+            renderFrame++;
+            
+            // Giới hạn số lượng điểm vẽ để không bị lag (tối đa 300 điểm)
+            const maxPoints = 300;
+            
+            let stateData = stateChart.data.datasets[0].data;
+            stateData.push({x: x, y: v});
+            if(stateData.length > maxPoints) stateData.shift();
+            
+            if (surfaceType === 'linear') {
+                let phaseData = phaseChart.data.datasets[0].data;
+                phaseData.push({x: e, y: de});
+                if(phaseData.length > maxPoints) phaseData.shift();
+            } else {
+                pidTrajectory.x.push(e);
+                pidTrajectory.y.push(int_e);
+                pidTrajectory.z.push(de);
+                if(pidTrajectory.x.length > maxPoints) {
+                    pidTrajectory.x.shift();
+                    pidTrajectory.y.shift();
+                    pidTrajectory.z.shift();
+                }
+            }
+            
+            let timeLabels = timeChart.data.labels;
+            let timeDataX = timeChart.data.datasets[0].data;
+            let timeDataXd = timeChart.data.datasets[1].data;
+            
+            timeLabels.push(t.toFixed(2));
+            timeDataX.push(x);
+            timeDataXd.push(xd);
+            
+            if(timeLabels.length > maxPoints) {
+                timeLabels.shift();
+                timeDataX.shift();
+                timeDataXd.shift();
+            }
+
+            // Cập nhật lên canvas
+            stateChart.update();
+            timeChart.update();
+            
+            if (surfaceType === 'linear') {
+                phaseChart.update();
+            } else if (isPlotlyInitialized && (renderFrame % 3 === 0 || !isRunning)) {
+                // Tối ưu render 3D: Chỉ cập nhật Plotly mỗi 3 khung hình để tránh giật lag khi chạy auto
+                Plotly.update('phase3dChart', {
+                    x: [pidTrajectory.x],
+                    y: [pidTrajectory.y],
+                    z: [pidTrajectory.z]
+                }, {}, [1]);
+            }
+        }
+
+        // --- HÀM CẬP NHẬT GIAO DIỆN KHI ĐỔI CHẾ ĐỘ ---
+        function updateVisibility() {
+            // Cập nhật Mặt trượt (Linear / PID)
+            if (surfaceType === 'linear') {
+                document.getElementById('params-linear').classList.remove('hidden');
+                document.getElementById('params-pid').classList.add('hidden');
+                document.getElementById('theory-linear').classList.remove('hidden');
+                document.getElementById('theory-pid').classList.add('hidden');
+                document.getElementById('row-inte').classList.add('hidden');
+                
+                document.getElementById('phase2d-container').classList.remove('hidden');
+                document.getElementById('phase3d-container').classList.add('hidden');
+                
+                document.querySelectorAll('.label-linear').forEach(el => el.classList.remove('hidden'));
+                document.querySelectorAll('.label-pid').forEach(el => el.classList.add('hidden'));
+            } else {
+                document.getElementById('params-linear').classList.add('hidden');
+                document.getElementById('params-pid').classList.remove('hidden');
+                document.getElementById('theory-linear').classList.add('hidden');
+                document.getElementById('theory-pid').classList.remove('hidden');
+                document.getElementById('row-inte').classList.remove('hidden');
+                
+                document.getElementById('phase2d-container').classList.add('hidden');
+                document.getElementById('phase3d-container').classList.remove('hidden');
+                
+                // Khởi tạo Plotly nếu chưa có, hoặc gọi resize để tự fix kích thước div
+                if (!isPlotlyInitialized) {
+                    initPlotly();
+                } else {
+                    Plotly.Plots.resize('phase3dChart');
+                }
+
+                document.querySelectorAll('.label-linear').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.label-pid').forEach(el => el.classList.remove('hidden'));
+            }
+
+            // Cập nhật Luật chuyển mạch (Sign / STA)
+            if (reachingType === 'sign') {
+                document.querySelectorAll('.law-sign').forEach(el => el.classList.remove('hidden'));
+                document.querySelectorAll('.law-sta').forEach(el => el.classList.add('hidden'));
+                document.getElementById('params-sta').classList.add('hidden');
+                document.getElementById('row-vsta').classList.add('hidden');
+            } else {
+                document.querySelectorAll('.law-sign').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.law-sta').forEach(el => el.classList.remove('hidden'));
+                document.getElementById('params-sta').classList.remove('hidden');
+                document.getElementById('row-vsta').classList.remove('hidden');
+            }
+
+            // Cập nhật cụ thể dòng hiển thị U_sw
+            document.querySelectorAll('.label-usw').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`label-usw-${surfaceType}-${reachingType}`).classList.remove('hidden');
+        }
+
+        // --- SỰ KIỆN GIAO DIỆN ---
+        
+        // Lắng nghe thay đổi loại mặt trượt
+        document.querySelectorAll('input[name="surface_type"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                surfaceType = e.target.value;
+                updateVisibility();
+                document.getElementById('btn-reset').click(); // Đặt lại mô phỏng khi đổi chế độ
+            });
+        });
+
+        // Lắng nghe thay đổi luật chuyển mạch
+        document.querySelectorAll('input[name="reaching_type"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                reachingType = e.target.value;
+                updateVisibility();
+                document.getElementById('btn-reset').click();
+            });
+        });
+
+        // Lắng nghe thanh trượt thay đổi
+        document.getElementById('input-xd').addEventListener('input', (e) => {
+            xd = parseFloat(e.target.value);
+            document.getElementById('val-xd').textContent = xd.toFixed(1);
+            
+            // Cập nhật điểm đích trên biểu đồ trạng thái
+            stateChart.data.datasets[1].data = [{x: xd, y: 0}];
+            stateChart.update();
+            
+            if(!isRunning) calculateAndRenderMath(); // Cập nhật math ngay nếu đang dừng
+        });
+
+        document.getElementById('input-lambda').addEventListener('input', (e) => {
+            lambda = parseFloat(e.target.value);
+            document.getElementById('val-lambda').textContent = lambda.toFixed(1);
+            updateSlidingSurfaceLine();
+            if(!isRunning) calculateAndRenderMath();
+        });
+
+        document.getElementById('input-kp').addEventListener('input', (e) => {
+            kp = parseFloat(e.target.value);
+            document.getElementById('val-kp').textContent = kp.toFixed(1);
+            updatePlotlySurface();
+            if(!isRunning) calculateAndRenderMath();
+        });
+        
+        document.getElementById('input-ki').addEventListener('input', (e) => {
+            ki = parseFloat(e.target.value);
+            document.getElementById('val-ki').textContent = ki.toFixed(1);
+            updatePlotlySurface();
+            if(!isRunning) calculateAndRenderMath();
+        });
+        
+        document.getElementById('input-kd').addEventListener('input', (e) => {
+            kd = parseFloat(e.target.value);
+            document.getElementById('val-kd').textContent = kd.toFixed(1);
+            updatePlotlySurface();
+            if(!isRunning) calculateAndRenderMath();
+        });
+
+        document.getElementById('input-k').addEventListener('input', (e) => {
+            K = parseFloat(e.target.value);
+            document.getElementById('val-k').textContent = K.toFixed(1);
+            if(!isRunning) calculateAndRenderMath();
+        });
+
+        document.getElementById('input-k2').addEventListener('input', (e) => {
+            K2 = parseFloat(e.target.value);
+            document.getElementById('val-k2').textContent = K2.toFixed(1);
+            if(!isRunning) calculateAndRenderMath();
+        });
+
+        // Nút điều khiển
+        const btnPlay = document.getElementById('btn-play');
+        const btnStep = document.getElementById('btn-step');
+        
+        btnPlay.addEventListener('click', () => {
+            if (isRunning) {
+                clearInterval(simulationInterval);
+                isRunning = false;
+                btnPlay.textContent = "▶ Chạy tự động";
+                btnPlay.classList.replace('bg-yellow-500', 'bg-green-500');
+                btnPlay.classList.replace('hover:bg-yellow-600', 'hover:bg-green-600');
+                btnStep.disabled = false;
+                btnStep.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                // Tốc độ chạy tự động: cứ 20ms chạy 1 bước dt
+                simulationInterval = setInterval(stepSimulation, 20);
+                isRunning = true;
+                btnPlay.textContent = "⏸ Dừng (Pause)";
+                btnPlay.classList.replace('bg-green-500', 'bg-yellow-500');
+                btnPlay.classList.replace('hover:bg-green-600', 'hover:bg-yellow-600');
+                btnStep.disabled = true; // Vô hiệu hóa nút step khi đang chạy auto
+                btnStep.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        });
+
+        btnStep.addEventListener('click', () => {
+            if (!isRunning) {
+                stepSimulation();
+            }
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            if (isRunning) btnPlay.click(); // Dừng nếu đang chạy
+            
+            // Đặt lại biến state
+            x = 0.0;
+            v = 0.0;
+            t = 0.0;
+            int_e = 0.0;
+            v_sta = 0.0;
+            renderFrame = 0;
+            
+            // Xóa data đồ thị
+            stateChart.data.datasets[0].data = [{x: 0, y: 0}];
+            stateChart.data.datasets[1].data = [{x: xd, y: 0}];
+            phaseChart.data.datasets[0].data = [{x: -xd, y: 0}];
+            
+            pidTrajectory = { x: [-xd], y: [0], z: [0] };
+            if (isPlotlyInitialized && surfaceType === 'pid') {
+                Plotly.update('phase3dChart', {
+                    x: [pidTrajectory.x],
+                    y: [pidTrajectory.y],
+                    z: [pidTrajectory.z]
+                }, {}, [1]);
+            }
+
+            timeChart.data.labels = [0];
+            timeChart.data.datasets[0].data = [0];
+            timeChart.data.datasets[1].data = [xd];
+            
+            stateChart.update();
+            phaseChart.update();
+            timeChart.update();
+            
+            updateSlidingSurfaceLine();
+            calculateAndRenderMath(); // Tính lại bước 0
+        });
+
+        // Khởi tạo lần đầu
+        updateVisibility();
+        updateSlidingSurfaceLine();
+        calculateAndRenderMath();
+
+    </script>
+</body>
+</html>
