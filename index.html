@@ -27,11 +27,17 @@
         .calc-row.hidden { display: none !important; }
         .katex { font-size: 1.1em; }
         .highlight-value { font-weight: bold; color: #2563eb; }
+        
+        /* Tùy chỉnh thanh cuộn cho phần sticky */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 <body class="text-gray-800 p-4 md:p-8">
 
-    <div class="max-w-7xl mx-auto space-y-6">
+    <div class="w-full space-y-6">
         
         <!-- Header -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -39,47 +45,156 @@
             <p class="text-gray-600">Minh họa thuật toán Sliding Mode Control cho <strong>Hệ bậc hai có thời gian trễ (SOPDT)</strong>. Khám phá cách SMC kết hợp <strong>Smith Predictor</strong> xử lý nhiễu đo lường và thời gian trễ.</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Phần 1: Tùy chọn Thuật toán & Lý thuyết (Full width) -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-6">
             
-            <!-- Cột trái: Lý thuyết & Bảng điều khiển -->
-            <div class="lg:col-span-5 space-y-6">
-                
-                <!-- Lý thuyết -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h2 class="text-xl font-bold mb-4 text-blue-700">1. Mô hình Toán học & Điều khiển</h2>
-                    <div class="text-sm space-y-3">
-                        <p>Hệ thống SOPDT: \(\ddot{x} = -a_1 \dot{x} - a_2 x + b \cdot u(t-L)\)</p>
-                        <p>Tín hiệu đo lường: \(x_m = x + noise\), \(\dot{x}_m = \dot{x} + noise\)</p>
-                        
-                        <div class="bg-purple-50 p-3 rounded border border-purple-200">
-                            <h3 class="font-bold text-purple-800">Bộ bù trễ Smith Predictor:</h3>
-                            <p>Dự đoán không trễ: \(\ddot{\hat{x}} = -a_1 \dot{\hat{x}} - a_2 \hat{x} + b \cdot u(t)\)</p>
-                            <p>Mô hình có trễ: \(\ddot{\bar{x}} = -a_1 \dot{\bar{x}} - a_2 \bar{x} + b \cdot u(t-L)\)</p>
-                            <p>Trạng thái dùng để ĐK: \(x_{ctrl} = \hat{x} + (x_m - \bar{x})\)</p>
-                            <p class="text-xs italic text-gray-500 mt-1">* Nếu tắt SP, hệ thống dùng trực tiếp \(x_{ctrl} = x_m\).</p>
-                        </div>
-
-                        <p>Sai số điều khiển: \(e = x_{ctrl} - x_d \)</p>
-                        <hr class="my-2">
-                        
-                        <!-- Lý thuyết Tuyến tính -->
-                        <div id="theory-linear">
-                            <h3 class="font-bold text-gray-700">Thiết kế SMC (Mặt trượt Tuyến tính):</h3>
-                            <p>1. Chọn mặt trượt: \(s = \dot{e} + \lambda e = 0\)</p>
-                            <p class="law-sign">2. Tín hiệu ĐK: \(u = \underbrace{\frac{1}{b}(a_1\dot{x}_{ctrl} + a_2 x_{ctrl} - \lambda \dot{x}_{ctrl})}_{u_{eq}} \underbrace{- \frac{K}{b} \text{sgn}(s)}_{u_{sw}}\)</p>
-                            <p class="law-sta hidden">2. Tín hiệu ĐK: \(u = \underbrace{\frac{1}{b}(a_1\dot{x}_{ctrl} + a_2 x_{ctrl} - \lambda \dot{x}_{ctrl})}_{u_{eq}} \underbrace{+ \frac{1}{b}(-K \sqrt{|s|} \text{sgn}(s) + v)}_{u_{sw}}\)</p>
-                        </div>
-
-                        <!-- Lý thuyết PID -->
-                        <div id="theory-pid" class="hidden">
-                            <h3 class="font-bold text-gray-700">Thiết kế SMC (Mặt trượt PID):</h3>
-                            <p>1. Chọn mặt trượt: \(s = K_p e + K_i \int e dt + K_d \dot{e} = 0\)</p>
-                            <p class="law-sign">2. Tín hiệu ĐK: \(u = \underbrace{\frac{1}{b}\left(a_1\dot{x}_{ctrl} + a_2 x_{ctrl} - \frac{K_p}{K_d}\dot{x}_{ctrl} - \frac{K_i}{K_d}e\right)}_{u_{eq}} \underbrace{- \frac{K}{b \cdot K_d} \text{sgn}(s)}_{u_{sw}}\)</p>
-                            <p class="law-sta hidden">2. Tín hiệu ĐK: \(u = \underbrace{\frac{1}{b}\left(a_1\dot{x}_{ctrl} + a_2 x_{ctrl} - \frac{K_p}{K_d}\dot{x}_{ctrl} - \frac{K_i}{K_d}e\right)}_{u_{eq}} \underbrace{+ \frac{1}{b \cdot K_d}(-K \sqrt{|s|} \text{sgn}(s) + v)}_{u_{sw}}\)</p>
-                        </div>
+            <!-- Bộ Switches chọn thuật toán -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Switch chọn mặt trượt -->
+                <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <label class="block font-semibold mb-2 text-gray-700">Loại Mặt Trượt:</label>
+                    <div class="flex flex-col sm:flex-row sm:space-x-6 space-y-2 sm:space-y-0">
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="radio" name="surface_type" value="linear" class="form-radio text-blue-600 w-5 h-5" checked>
+                            <span class="ml-2 font-medium">Tuyến tính (Linear)</span>
+                        </label>
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="radio" name="surface_type" value="pid" class="form-radio text-green-600 w-5 h-5">
+                            <span class="ml-2 font-medium">PID</span>
+                        </label>
                     </div>
                 </div>
 
+                <!-- Switch chọn luật chuyển mạch -->
+                <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <label class="block font-semibold mb-2 text-gray-700">Luật Chuyển Mạch:</label>
+                    <div class="flex flex-col sm:flex-row sm:space-x-6 space-y-2 sm:space-y-0">
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="radio" name="reaching_type" value="sign" class="form-radio text-red-600 w-5 h-5" checked>
+                            <span class="ml-2 font-medium">Hàm Dấu (Sign)</span>
+                        </label>
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="radio" name="reaching_type" value="super_twisting" class="form-radio text-purple-600 w-5 h-5">
+                            <span class="ml-2 font-medium">Super-Twisting (STA)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Switch Smith Predictor -->
+                <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <label class="block font-semibold mb-2 text-gray-700">Bộ Bù Trễ:</label>
+                    <div class="flex items-center">
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="toggle-sp" class="form-checkbox text-purple-600 w-5 h-5">
+                            <span class="ml-2 font-medium text-purple-600">Bật Smith Predictor (SP)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lý thuyết -->
+            <div>
+                <h2 class="text-xl font-bold mb-4 text-blue-700 border-b pb-2">1. Lý thuyết & Các bước tính toán chi tiết</h2>
+                <div class="text-sm space-y-5 text-gray-700 leading-relaxed">
+                    
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-base">Bước 1: Hiểu về Hệ thống (Plant)</h3>
+                        <p class="mt-1">Hệ thống ta đang điều khiển tuân theo phương trình động lực học (SOPDT): 
+                            <span class="bg-gray-100 px-2 py-1 rounded font-mono block mt-2 mb-2 text-center">\(\underbrace{\ddot{x}}_{\text{Gia tốc}} = \underbrace{-a_1 \dot{x}}_{\text{Lực cản}} \underbrace{- a_2 x}_{\text{Lực đàn hồi}} + \underbrace{b \cdot u(t-L)}_{\text{Lực điều khiển (bị trễ)}}\)</span>
+                        </p>
+                        <p>Trong thực tế, cảm biến đo lường luôn có sai số, nên tín hiệu ta nhận được là: \(x_m = x + noise\) và \(\dot{x}_m = \dot{x} + noise\).</p>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-base">Bước 2: Xử lý thời gian trễ (Smith Predictor)</h3>
+                        <p class="mt-1 mb-2">Vì lệnh điều khiển \(u\) mất một thời gian \(L\) mới tác động được lên hệ thống, nếu ta dùng ngay dữ liệu hiện tại để tính toán, hệ thống sẽ bị phản ứng thái quá (overshoot) và dao động. Bộ bù trễ giải quyết bằng cách:</p>
+                        <div id="theory-sp" class="bg-purple-50 p-4 rounded border border-purple-200 hidden shadow-inner space-y-2 text-purple-900">
+                            <ul class="list-disc pl-5 space-y-1">
+                                <li><strong>Mô phỏng 1 hệ lý tưởng (không trễ):</strong> \(\ddot{\hat{x}} = -a_1 \dot{\hat{x}} - a_2 \hat{x} + b \cdot u(t)\)</li>
+                                <li><strong>Mô phỏng 1 hệ có trễ y như thực tế:</strong> \(\ddot{\bar{x}} = -a_1 \dot{\bar{x}} - a_2 \bar{x} + b \cdot u(t-L)\)</li>
+                                <li><strong>Tổng hợp trạng thái để điều khiển:</strong> Ta lấy dự đoán lý tưởng cộng với phần sai lệch thực tế. <br>
+                                \(\Rightarrow x_{ctrl} = \hat{x} + (x_m - \bar{x})\) và \(\dot{x}_{ctrl} = \dot{\hat{x}} + (\dot{x}_m - \dot{\bar{x}})\)
+                                </li>
+                            </ul>
+                        </div>
+                        <p id="theory-no-sp" class="bg-gray-50 p-3 rounded border border-gray-200 text-gray-600 italic">Hiện tại SP đang tắt. Bộ điều khiển sử dụng trực tiếp dữ liệu đo được: \(x_{ctrl} = x_m\).</p>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-base">Bước 3: Định nghĩa Sai số (Error)</h3>
+                        <p class="mt-1">Mục tiêu là đưa vị trí hệ thống (\(x_{ctrl}\)) về vị trí đích mong muốn (\(x_d\)). Ta gọi độ lệch này là Sai số \(e\).</p>
+                        <ul class="list-disc pl-5 mt-1">
+                            <li>Sai số vị trí: \(e = x_{ctrl} - x_d\)</li>
+                            <li>Đạo hàm sai số (vận tốc lỗi): \(\dot{e} = \dot{x}_{ctrl} - \dot{x}_d = \dot{x}_{ctrl}\) (vì đích \(x_d\) đứng yên nên \(\dot{x}_d = 0\)).</li>
+                            <li>Đạo hàm bậc hai (gia tốc lỗi): \(\ddot{e} = \ddot{x}_{ctrl}\)</li>
+                        </ul>
+                    </div>
+
+                    <div id="theory-linear" class="bg-blue-50 p-4 rounded-lg border border-blue-200 shadow-inner">
+                        <h3 class="font-bold text-blue-800 text-base">Bước 4: Thiết lập Mặt trượt Tuyến tính (Linear Surface)</h3>
+                        <p class="mt-1 mb-2">Thay vì điều khiển \(e\) và \(\dot{e}\) riêng lẻ, SMC gộp chúng thành một biến duy nhất gọi là Mặt trượt \(s\):</p>
+                        <p class="text-center font-mono bg-white p-2 rounded mb-2 font-bold text-blue-700">\(s = \dot{e} + \lambda e\)</p>
+                        <p class="mb-3">Nếu ta điều khiển lực \(u\) sao cho \(s = 0\), thì \(\dot{e} = -\lambda e\). Nghĩa là sai số \(e\) sẽ tự động trượt dần về 0 một cách ổn định.</p>
+
+                        <h3 class="font-bold text-blue-800 text-base">Bước 5: Tìm Tín hiệu Điều khiển (\(u\))</h3>
+                        <p class="mt-1">Tín hiệu tổng \(u\) bao gồm hai phần: <strong>\(u = u_{eq} + u_{sw}\)</strong></p>
+                        
+                        <div class="space-y-2 mt-2">
+                            <p><strong>a. Lực tương đương (\(u_{eq}\)):</strong> Làm nhiệm vụ "triệt tiêu" các tác động tự nhiên của hệ thống (lực cản, lò xo) để giữ cho \(s\) không đổi (\(\dot{s} = 0\)).</p>
+                            <ul class="list-decimal pl-5 text-gray-700 text-xs md:text-sm">
+                                <li>Lấy đạo hàm \(s\): \(\dot{s} = \ddot{e} + \lambda\dot{e} = \ddot{x}_{ctrl} + \lambda\dot{x}_{ctrl}\)</li>
+                                <li>Thế pt động lực học vào \(\ddot{x}_{ctrl}\): \(\dot{s} = (-a_1\dot{x}_{ctrl} - a_2 x_{ctrl} + b \cdot u) + \lambda\dot{x}_{ctrl}\)</li>
+                                <li>Giải phương trình \(\dot{s} = 0\) để tìm \(u_{eq}\): <br>
+                                    \(\Rightarrow b \cdot u_{eq} = a_1\dot{x}_{ctrl} + a_2 x_{ctrl} - \lambda\dot{x}_{ctrl}\) <br>
+                                    \(\Rightarrow u_{eq} = \frac{1}{b}(a_1\dot{x}_{ctrl} + a_2 x_{ctrl} - \lambda\dot{x}_{ctrl})\)
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="space-y-2 mt-3">
+                            <p><strong>b. Lực chuyển mạch (\(u_{sw}\)):</strong> Làm nhiệm vụ "bẻ lái" hệ thống hướng thẳng về mặt trượt \(s=0\) mỗi khi nó đi chệch hướng.</p>
+                            <p class="law-sign text-gray-700 pl-5">Luật Hàm Dấu: Ép \(\dot{s} = -K \cdot \text{sgn}(s)\). <br>\(\Rightarrow u_{sw} = -\frac{K}{b} \text{sgn}(s)\)</p>
+                            <p class="law-sta hidden text-gray-700 pl-5">Luật Super-Twisting (STA): Giúp giảm giật (chattering) bằng cách tích phân. <br>\(\Rightarrow u_{sw} = \frac{1}{b}\left(-K \sqrt{|s|} \text{sgn}(s) + \int -K_2 \text{sgn}(s)dt \right)\)</p>
+                        </div>
+                    </div>
+
+                    <div id="theory-pid" class="hidden bg-green-50 p-4 rounded-lg border border-green-200 shadow-inner">
+                        <h3 class="font-bold text-green-800 text-base">Bước 4: Thiết lập Mặt trượt PID</h3>
+                        <p class="mt-1 mb-2">Thêm thành phần tích phân để khử sai số tĩnh (chống lại nhiễu ngoài hoặc sai số mô hình). Mặt trượt \(s\) được định nghĩa:</p>
+                        <p class="text-center font-mono bg-white p-2 rounded mb-2 font-bold text-green-700">\(s = K_p e + K_i \int e dt + K_d \dot{e}\)</p>
+                        
+                        <h3 class="font-bold text-green-800 text-base mt-4">Bước 5: Tìm Tín hiệu Điều khiển (\(u\))</h3>
+                        <p class="mt-1">Tín hiệu tổng \(u\) bao gồm hai phần: <strong>\(u = u_{eq} + u_{sw}\)</strong></p>
+                        
+                        <div class="space-y-2 mt-2">
+                            <p><strong>a. Lực tương đương (\(u_{eq}\)):</strong> Giải bài toán \(\dot{s} = 0\) để giữ hệ thống trượt ổn định.</p>
+                            <ul class="list-decimal pl-5 text-gray-700 text-xs md:text-sm">
+                                <li>Lấy đạo hàm \(s\): \(\dot{s} = K_p\dot{e} + K_i e + K_d\ddot{e} = K_p\dot{x}_{ctrl} + K_i e + K_d\ddot{x}_{ctrl}\)</li>
+                                <li>Thế pt động lực học: \(\dot{s} = K_p\dot{x}_{ctrl} + K_i e + K_d(-a_1\dot{x}_{ctrl} - a_2 x_{ctrl} + b \cdot u)\)</li>
+                                <li>Giải phương trình \(\dot{s} = 0\) để tìm \(u_{eq}\): <br>
+                                    \(\Rightarrow K_d(b \cdot u_{eq}) = K_d(a_1\dot{x}_{ctrl} + a_2 x_{ctrl}) - K_p\dot{x}_{ctrl} - K_i e\) <br>
+                                    \(\Rightarrow u_{eq} = \frac{1}{b}\left(a_1\dot{x}_{ctrl} + a_2 x_{ctrl} - \frac{K_p}{K_d}\dot{x}_{ctrl} - \frac{K_i}{K_d}e\right)\)
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="space-y-2 mt-3">
+                            <p><strong>b. Lực chuyển mạch (\(u_{sw}\)):</strong> Ép hệ thống lao về mặt trượt.</p>
+                            <p class="law-sign text-gray-700 pl-5">Luật Hàm Dấu: Tương tự, ép \(\dot{s} = -K \cdot \text{sgn}(s)\). Cần chia thêm cho \(K_d\) ở mẫu số. <br>\(\Rightarrow u_{sw} = -\frac{K}{b \cdot K_d} \text{sgn}(s)\)</p>
+                            <p class="law-sta hidden text-gray-700 pl-5">Luật Super-Twisting (STA): Giúp giảm giật. <br>\(\Rightarrow u_{sw} = \frac{1}{b \cdot K_d}\left(-K \sqrt{|s|} \text{sgn}(s) + \int -K_2 \text{sgn}(s)dt \right)\)</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Thêm class items-start để position sticky hoạt động đúng -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- Cột trái: Bảng điều khiển (Sticky khi scroll) -->
+            <div class="lg:col-span-5 space-y-6 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] overflow-y-auto custom-scrollbar pb-4">
+                
                 <!-- Bảng điều khiển -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <h2 class="text-xl font-bold mb-4 text-green-700">2. Thông số Cài đặt</h2>
@@ -136,88 +251,44 @@
                         </div>
                     </div>
 
-                    <!-- Lọc & Bù trễ -->
-                    <div class="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <!-- Nhiễu Đo Lường & Low-pass Filter -->
-                        <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-200 shadow-inner transition-colors duration-300" id="sensor-config-box">
-                            
-                            <!-- Chế độ Mô phỏng: Nhiễu Đo Lường -->
-                            <div id="sim-noise-config">
-                                <div class="flex items-center justify-between mb-3">
-                                    <h3 class="font-bold text-yellow-800 text-sm">Nhiễu Đo Lường:</h3>
-                                    <label class="inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" id="toggle-noise" class="form-checkbox text-yellow-600 w-5 h-5">
-                                    </label>
-                                </div>
-                                <div class="space-y-2" id="noise-params" style="opacity: 0.5; pointer-events: none;">
-                                    <div class="flex justify-between">
-                                        <span class="text-xs text-gray-700">Biên độ \(x\):</span>
-                                        <input type="number" id="input-noise-x" step="0.01" min="0" value="0.05" class="w-16 border border-gray-300 rounded px-1 text-xs text-right">
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-xs text-gray-700">Biên độ \(\dot{x}\):</span>
-                                        <input type="number" id="input-noise-v" step="0.01" min="0" value="0.10" class="w-16 border border-gray-300 rounded px-1 text-xs text-right">
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Chế độ Thực tế: Lọc Thông Thấp -->
-                            <div id="hw-filter-config" class="hidden">
-                                <div class="flex items-center justify-between mb-2">
-                                    <h3 class="font-bold text-indigo-800 text-sm">Lọc Thông Thấp (\(\dot{x}\)):</h3>
-                                </div>
-                                <div class="space-y-2">
-                                    <label class="block font-semibold text-xs text-gray-700">Hệ số lọc \(\alpha\): <span id="val-lpf" class="text-indigo-600">0.80</span></label>
-                                    <input type="range" id="input-lpf" min="0.0" max="0.99" step="0.01" value="0.80" class="w-full">
-                                    <p class="text-[10px] text-gray-500 italic leading-tight">\(v_m = \alpha \cdot v_{m-1} + (1-\alpha) \cdot v_{raw}\)</p>
-                                </div>
-                            </div>
-                            
-                        </div>
-
-                        <!-- Smith Predictor -->
-                        <div class="p-4 bg-purple-50 rounded-lg border border-purple-200 shadow-inner">
-                            <div class="flex items-center justify-between mb-2">
-                                <h3 class="font-bold text-purple-800 text-sm">Smith Predictor:</h3>
+                    <!-- Lọc Nhiễu Đo Lường & Low-pass Filter -->
+                    <div class="mb-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200 shadow-inner transition-colors duration-300" id="sensor-config-box">
+                        
+                        <!-- Chế độ Mô phỏng: Nhiễu Đo Lường -->
+                        <div id="sim-noise-config">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="font-bold text-yellow-800 text-sm">Nhiễu Đo Lường:</h3>
                                 <label class="inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="toggle-sp" class="form-checkbox text-purple-600 w-5 h-5">
+                                    <input type="checkbox" id="toggle-noise" class="form-checkbox text-yellow-600 w-5 h-5">
                                 </label>
                             </div>
-                            <p class="text-xs text-purple-600">Bù thời gian trễ bằng mô hình danh định dự đoán trạng thái.</p>
+                            <div class="space-y-2" id="noise-params" style="opacity: 0.5; pointer-events: none;">
+                                <div class="flex justify-between">
+                                    <span class="text-xs text-gray-700">Biên độ \(x\):</span>
+                                    <input type="number" id="input-noise-x" step="0.01" min="0" value="0.05" class="w-16 border border-gray-300 rounded px-1 text-xs text-right">
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-xs text-gray-700">Biên độ \(\dot{x}\):</span>
+                                    <input type="number" id="input-noise-v" step="0.01" min="0" value="0.10" class="w-16 border border-gray-300 rounded px-1 text-xs text-right">
+                                </div>
+                            </div>
                         </div>
+                        
+                        <!-- Chế độ Thực tế: Lọc Thông Thấp -->
+                        <div id="hw-filter-config" class="hidden">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-bold text-indigo-800 text-sm">Lọc Thông Thấp (\(\dot{x}\)):</h3>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block font-semibold text-xs text-gray-700">Hệ số lọc \(\alpha\): <span id="val-lpf" class="text-indigo-600">0.80</span></label>
+                                <input type="range" id="input-lpf" min="0.0" max="0.99" step="0.01" value="0.80" class="w-full">
+                                <p class="text-[10px] text-gray-500 italic leading-tight">\(v_m = \alpha \cdot v_{m-1} + (1-\alpha) \cdot v_{raw}\)</p>
+                            </div>
+                        </div>
+                        
                     </div>
 
-                    <!-- Switch chọn mặt trượt -->
-                    <div class="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <label class="block font-semibold mb-2 text-gray-700">Loại Mặt Trượt:</label>
-                        <div class="flex flex-col sm:flex-row sm:space-x-6 space-y-2 sm:space-y-0">
-                            <label class="inline-flex items-center cursor-pointer">
-                                <input type="radio" name="surface_type" value="linear" class="form-radio text-blue-600 w-5 h-5" checked>
-                                <span class="ml-2 font-medium">Tuyến tính (Linear)</span>
-                            </label>
-                            <label class="inline-flex items-center cursor-pointer">
-                                <input type="radio" name="surface_type" value="pid" class="form-radio text-green-600 w-5 h-5">
-                                <span class="ml-2 font-medium">PID</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Switch chọn luật chuyển mạch -->
-                    <div class="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <label class="block font-semibold mb-2 text-gray-700">Luật Chuyển Mạch:</label>
-                        <div class="flex flex-col sm:flex-row sm:space-x-6 space-y-2 sm:space-y-0">
-                            <label class="inline-flex items-center cursor-pointer">
-                                <input type="radio" name="reaching_type" value="sign" class="form-radio text-red-600 w-5 h-5" checked>
-                                <span class="ml-2 font-medium">Hàm Dấu (Sign)</span>
-                            </label>
-                            <label class="inline-flex items-center cursor-pointer">
-                                <input type="radio" name="reaching_type" value="super_twisting" class="form-radio text-purple-600 w-5 h-5">
-                                <span class="ml-2 font-medium">Super-Twisting (STA)</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="space-y-4 text-sm">
+                    <div class="space-y-4 text-sm mt-4">
                         <div>
                             <label class="block font-semibold mb-1">Vị trí mong muốn (\(x_d\)): <span id="val-xd" class="text-blue-600">10.000</span> deg</label>
                             <input type="range" id="input-xd" min="0" max="20" step="0.001" value="10.0" class="w-full">
@@ -226,32 +297,32 @@
                         <!-- Params Linear -->
                         <div id="params-linear">
                             <label class="block font-semibold mb-1">Độ dốc mặt trượt (\(\lambda\)): <span id="val-lambda" class="text-blue-600">2.000</span></label>
-                            <input type="range" id="input-lambda" min="0.5" max="5" step="0.001" value="2.0" class="w-full">
+                            <input type="range" id="input-lambda" min="0.001" max="5" step="0.001" value="2.0" class="w-full">
                         </div>
 
                         <!-- Params PID -->
                         <div id="params-pid" class="hidden grid grid-cols-3 gap-2">
                             <div>
                                 <label class="block font-semibold mb-1">\(K_p\): <span id="val-kp" class="text-blue-600">2.000</span></label>
-                                <input type="range" id="input-kp" min="0.1" max="10" step="0.001" value="2.0" class="w-full">
+                                <input type="range" id="input-kp" min="0.001" max="10" step="0.001" value="2.0" class="w-full">
                             </div>
                             <div>
                                 <label class="block font-semibold mb-1">\(K_i\): <span id="val-ki" class="text-blue-600">0.500</span></label>
-                                <input type="range" id="input-ki" min="0.0" max="5" step="0.001" value="0.5" class="w-full">
+                                <input type="range" id="input-ki" min="0.001" max="5" step="0.001" value="0.5" class="w-full">
                             </div>
                             <div>
                                 <label class="block font-semibold mb-1">\(K_d\): <span id="val-kd" class="text-blue-600">1.000</span></label>
-                                <input type="range" id="input-kd" min="0.1" max="5" step="0.001" value="1.0" class="w-full">
+                                <input type="range" id="input-kd" min="0.001" max="5" step="0.001" value="1.0" class="w-full">
                             </div>
                         </div>
                         <div>
                             <label class="block font-semibold mb-1">Hệ số chuyển mạch (\(K\)): <span id="val-k" class="text-blue-600">5.000</span></label>
-                            <input type="range" id="input-k" min="0.1" max="30" step="0.001" value="5.0" class="w-full">
+                            <input type="range" id="input-k" min="0.001" max="30" step="0.001" value="5.0" class="w-full">
                         </div>
                         <!-- Params Super-Twisting -->
                         <div id="params-sta" class="hidden">
                             <label class="block font-semibold mb-1">Hệ số tích phân STA (\(K_2\)): <span id="val-k2" class="text-blue-600">10.000</span></label>
-                            <input type="range" id="input-k2" min="0.1" max="50" step="0.001" value="10.0" class="w-full">
+                            <input type="range" id="input-k2" min="0.001" max="50" step="0.001" value="10.0" class="w-full">
                         </div>
                         <div id="sim-controls" class="flex space-x-2 pt-2">
                             <button id="btn-play" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded font-semibold transition">▶ Chạy tự động</button>
@@ -337,61 +408,129 @@
 
                 <!-- Đồ thị -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative">
+                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1">
+                            <label class="inline-flex items-center cursor-pointer" title="Tự động Scale Trục">
+                                <input type="checkbox" id="scale-state" class="form-checkbox text-indigo-600 w-4 h-4" checked>
+                                <span class="ml-1 text-xs font-bold text-indigo-600">Auto</span>
+                            </label>
+                        </div>
                         <h3 class="font-bold text-center text-gray-700 mb-2">Mặt phẳng trạng thái THỰC (x, \(\dot{x}\))</h3>
                         <canvas id="stateChart" height="250"></canvas>
                         <p class="text-xs text-center text-gray-500 mt-2">Trục X: Vị trí \(x\) | Trục Y: Vận tốc \(\dot{x}\)<br>Dấu thập: Vị trí đích đến \(x_d\)</p>
                     </div>
                     
                     <!-- Container Quỹ đạo 2D (Linear) -->
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100" id="phase2d-container">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative" id="phase2d-container">
+                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1">
+                            <label class="inline-flex items-center cursor-pointer" title="Tự động Scale Trục">
+                                <input type="checkbox" id="scale-phase2d" class="form-checkbox text-indigo-600 w-4 h-4" checked>
+                                <span class="ml-1 text-xs font-bold text-indigo-600">Auto</span>
+                            </label>
+                        </div>
                         <h3 class="font-bold text-center text-gray-700 mb-2">Quỹ đạo sai số (e, \(\dot{e}\))</h3>
                         <canvas id="phaseChart" height="250"></canvas>
                         <p class="text-xs text-center text-gray-500 mt-2">Trục X: Sai số ĐK \(e\) | Trục Y: \(\dot{e}\) ĐK<br>Đường đứt nét: Mặt trượt \(s = 0\)</p>
                     </div>
 
                     <!-- Container Quỹ đạo 3D (PID) -->
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hidden" id="phase3d-container">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hidden relative" id="phase3d-container">
+                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1">
+                            <label class="inline-flex items-center cursor-pointer" title="Tự động Scale Trục">
+                                <input type="checkbox" id="scale-phase3d" class="form-checkbox text-indigo-600 w-4 h-4" checked>
+                                <span class="ml-1 text-xs font-bold text-indigo-600">Auto</span>
+                            </label>
+                        </div>
                         <h3 class="font-bold text-center text-gray-700 mb-2">Mặt trượt 3D (PID)</h3>
                         <div id="phase3dChart" style="height: 250px; width: 100%;"></div>
                         <p class="text-xs text-center text-gray-500 mt-2">X: Sai số ĐK \(e\) | Y: Tích phân \(\int e\) | Z: Đạo hàm \(\dot{e}\)</p>
                     </div>
 
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2 relative">
+                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1">
+                            <label class="inline-flex items-center cursor-pointer" title="Tự động Scale Trục">
+                                <input type="checkbox" id="scale-time" class="form-checkbox text-indigo-600 w-4 h-4" checked>
+                                <span class="ml-1 text-xs font-bold text-indigo-600">Auto</span>
+                            </label>
+                        </div>
                         <h3 class="font-bold text-center text-gray-700 mb-2">Đáp ứng thời gian (Time Response)</h3>
                         <canvas id="timeChart" height="150"></canvas>
                         <p class="text-xs text-center text-gray-500 mt-2">Theo dõi Vị trí thực \(x\) tiến về \(x_d\)</p>
                     </div>
                     
-                    <!-- Tùy chọn ẩn/hiển thị tín hiệu điều khiển -->
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2 flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-8">
-                        <span class="font-bold text-gray-700">Tùy chọn hiển thị tín hiệu:</span>
-                        <label class="inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="toggle-ueq" checked class="form-checkbox text-blue-600 w-5 h-5">
-                            <span class="ml-2 font-medium text-blue-600">\(u_{eq}\) (Tương đương)</span>
-                        </label>
-                        <label class="inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="toggle-usw" checked class="form-checkbox text-orange-600 w-5 h-5">
-                            <span class="ml-2 font-medium text-orange-600">\(u_{sw}\) (Chuyển mạch)</span>
-                        </label>
-                        <label class="inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="toggle-u" checked class="form-checkbox text-green-600 w-5 h-5">
-                            <span class="ml-2 font-medium text-green-600">\(u\) (Tổng)</span>
-                        </label>
+                    <!-- Biểu đồ Sai số -->
+                    <div id="container-error" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2 relative">
+                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1">
+                            <label class="inline-flex items-center cursor-pointer" title="Tự động Scale Trục">
+                                <input type="checkbox" id="scale-error" class="form-checkbox text-indigo-600 w-4 h-4" checked>
+                                <span class="ml-1 text-xs font-bold text-indigo-600">Auto</span>
+                            </label>
+                        </div>
+                        <h3 class="font-bold text-center text-red-600 mb-2">Sai số điều khiển (Error \(e\))</h3>
+                        <canvas id="errorChart" height="100"></canvas>
+                        <p class="text-xs text-center text-gray-500 mt-2">Sai số giữa trạng thái đo lường/dự đoán và vị trí đích</p>
+                    </div>
+                    
+                    <!-- Tùy chọn ẩn/hiển thị tín hiệu điều khiển & Window Time -->
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2 flex flex-wrap justify-center items-center gap-4">
+                        <div class="flex items-center space-x-4">
+                            <span class="font-bold text-gray-700">Hiển thị tín hiệu:</span>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="toggle-error" checked class="form-checkbox text-red-600 w-5 h-5">
+                                <span class="ml-2 font-medium text-red-600">Sai số \(e\)</span>
+                            </label>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="toggle-ueq" checked class="form-checkbox text-blue-600 w-5 h-5">
+                                <span class="ml-2 font-medium text-blue-600">\(u_{eq}\)</span>
+                            </label>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="toggle-usw" checked class="form-checkbox text-orange-600 w-5 h-5">
+                                <span class="ml-2 font-medium text-orange-600">\(u_{sw}\)</span>
+                            </label>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="toggle-u" checked class="form-checkbox text-green-600 w-5 h-5">
+                                <span class="ml-2 font-medium text-green-600">\(u\) Tổng</span>
+                            </label>
+                        </div>
+                        <div class="h-6 border-l border-gray-300 hidden sm:block"></div>
+                        <div class="flex items-center space-x-4">
+                            <div class="flex items-center bg-gray-50 border border-gray-200 rounded px-2 py-1">
+                                <span class="text-sm font-semibold text-gray-700 mr-2">Cửa sổ thời gian (s):</span>
+                                <input type="number" id="input-time-window" min="1" max="100" step="1" value="10" class="w-16 text-center border border-gray-300 rounded focus:outline-none focus:border-indigo-500">
+                            </div>
+                        </div>
                     </div>
 
                     <!-- 3 Biểu đồ tín hiệu riêng biệt -->
-                    <div id="container-ueq" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2">
+                    <div id="container-ueq" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2 relative">
+                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1">
+                            <label class="inline-flex items-center cursor-pointer" title="Tự động Scale Trục">
+                                <input type="checkbox" id="scale-ueq" class="form-checkbox text-indigo-600 w-4 h-4" checked>
+                                <span class="ml-1 text-xs font-bold text-indigo-600">Auto</span>
+                            </label>
+                        </div>
                         <h3 class="font-bold text-center text-blue-600 mb-2">Tín hiệu Tương đương (\(u_{eq}\))</h3>
                         <canvas id="controlUeqChart" height="100"></canvas>
                     </div>
 
-                    <div id="container-usw" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2">
+                    <div id="container-usw" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2 relative">
+                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1">
+                            <label class="inline-flex items-center cursor-pointer" title="Tự động Scale Trục">
+                                <input type="checkbox" id="scale-usw" class="form-checkbox text-indigo-600 w-4 h-4" checked>
+                                <span class="ml-1 text-xs font-bold text-indigo-600">Auto</span>
+                            </label>
+                        </div>
                         <h3 class="font-bold text-center text-orange-600 mb-2">Tín hiệu Chuyển mạch (\(u_{sw}\))</h3>
                         <canvas id="controlUswChart" height="100"></canvas>
                     </div>
 
-                    <div id="container-u" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2">
+                    <div id="container-u" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2 relative">
+                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1">
+                            <label class="inline-flex items-center cursor-pointer" title="Tự động Scale Trục">
+                                <input type="checkbox" id="scale-u" class="form-checkbox text-indigo-600 w-4 h-4" checked>
+                                <span class="ml-1 text-xs font-bold text-indigo-600">Auto</span>
+                            </label>
+                        </div>
                         <h3 class="font-bold text-center text-green-600 mb-2">Tín hiệu Tổng phát ra (\(u\)) & Nhận được bị trễ (\(u_{delayed}\))</h3>
                         <canvas id="controlUChart" height="100"></canvas>
                     </div>
@@ -451,6 +590,9 @@
         let noiseAmpX = 0.05;
         let noiseAmpV = 0.10;
         
+        // Thông số hiển thị đồ thị
+        let displayTimeWindow = 10.0; // Giây hiển thị trên đồ thị
+
         // Cấu hình Phần cứng (Web Serial)
         let hardwareMode = false;
         let sendUToSerial = false;
@@ -483,6 +625,7 @@
         const stateCtx = document.getElementById('stateChart').getContext('2d');
         const phaseCtx = document.getElementById('phaseChart').getContext('2d');
         const timeCtx = document.getElementById('timeChart').getContext('2d');
+        const errorCtx = document.getElementById('errorChart').getContext('2d');
         const ueqCtx = document.getElementById('controlUeqChart').getContext('2d');
         const uswCtx = document.getElementById('controlUswChart').getContext('2d');
         const uCtx = document.getElementById('controlUChart').getContext('2d');
@@ -616,6 +759,18 @@
             plugins: { legend: { display: true } }
         };
 
+        // Khởi tạo đồ thị Sai số
+        const errorChart = new Chart(errorCtx, {
+            type: 'line',
+            data: {
+                labels: [0],
+                datasets: [{
+                    label: 'Sai số e(t)', data: [-xd], borderColor: '#ef4444', tension: 0.1, pointRadius: 0, borderWidth: 2
+                }]
+            },
+            options: controlChartOptions
+        });
+
         // Khởi tạo đồ thị Tín hiệu U_eq
         const controlUeqChart = new Chart(ueqCtx, {
             type: 'line',
@@ -656,6 +811,85 @@
             },
             options: controlUChartOptions
         });
+
+        // --- CẬP NHẬT TRỤC SCALE CỦA CHART ---
+        function updateChartScales() {
+            // Định nghĩa các giới hạn tĩnh (Static Ranges) khi tắt Auto-scale
+            const staticScales = {
+                stateX: [-5, 25], stateY: [-15, 15],
+                phaseX: [-30, 30], phaseY: [-20, 20],
+                timeY: [-5, 25],
+                controlY: [-5000, 5000] // Vì b rất nhỏ, u có thể rất lớn
+            };
+
+            const applyScale = (chart, axis, min, max, auto) => {
+                if (auto) {
+                    delete chart.options.scales[axis].min;
+                    delete chart.options.scales[axis].max;
+                } else {
+                    chart.options.scales[axis].min = min;
+                    chart.options.scales[axis].max = max;
+                }
+            };
+
+            // State Chart
+            let autoState = document.getElementById('scale-state').checked;
+            applyScale(stateChart, 'x', staticScales.stateX[0], staticScales.stateX[1], autoState);
+            applyScale(stateChart, 'y', staticScales.stateY[0], staticScales.stateY[1], autoState);
+            stateChart.update();
+
+            // Phase Chart
+            let autoPhase2D = document.getElementById('scale-phase2d').checked;
+            applyScale(phaseChart, 'x', staticScales.phaseX[0], staticScales.phaseX[1], autoPhase2D);
+            applyScale(phaseChart, 'y', staticScales.phaseY[0], staticScales.phaseY[1], autoPhase2D);
+            phaseChart.update();
+
+            // Time Chart
+            let autoTime = document.getElementById('scale-time').checked;
+            applyScale(timeChart, 'y', staticScales.timeY[0], staticScales.timeY[1], autoTime);
+            timeChart.update();
+
+            // Error Chart (Sử dụng cùng trục x với quỹ đạo sai số)
+            let autoError = document.getElementById('scale-error').checked;
+            applyScale(errorChart, 'y', staticScales.phaseX[0], staticScales.phaseX[1], autoError);
+            errorChart.update();
+
+            // Control Charts
+            let autoUeq = document.getElementById('scale-ueq').checked;
+            applyScale(controlUeqChart, 'y', staticScales.controlY[0], staticScales.controlY[1], autoUeq);
+            controlUeqChart.update();
+            
+            let autoUsw = document.getElementById('scale-usw').checked;
+            applyScale(controlUswChart, 'y', staticScales.controlY[0], staticScales.controlY[1], autoUsw);
+            controlUswChart.update();
+            
+            let autoU = document.getElementById('scale-u').checked;
+            applyScale(controlUChart, 'y', staticScales.controlY[0], staticScales.controlY[1], autoU);
+            controlUChart.update();
+
+            // Plotly 3D
+            if (isPlotlyInitialized) {
+                let autoPhase3D = document.getElementById('scale-phase3d').checked;
+                let updateLayout = {};
+                if (autoPhase3D) {
+                    updateLayout = {
+                        'scene.xaxis.autorange': true,
+                        'scene.yaxis.autorange': true,
+                        'scene.zaxis.autorange': true
+                    };
+                } else {
+                    updateLayout = {
+                        'scene.xaxis.autorange': false,
+                        'scene.xaxis.range': [-30, 30],
+                        'scene.yaxis.autorange': false,
+                        'scene.yaxis.range': [-100, 100], // Int E
+                        'scene.zaxis.autorange': false,
+                        'scene.zaxis.range': [-30, 30] // E dot
+                    };
+                }
+                Plotly.relayout('phase3dChart', updateLayout);
+            }
+        }
 
         // --- SERIAL API FUNCTIONS ---
         async function readSerialLoop() {
@@ -809,12 +1043,14 @@
                 name: 'Quỹ đạo'
             };
 
+            let isAuto = document.getElementById('scale-phase3d').checked;
+
             let layout = {
                 margin: { l: 0, r: 0, b: 0, t: 10 },
                 scene: {
-                    xaxis: { title: 'e', range: [-30, 30] },
-                    yaxis: { title: '∫e' },
-                    zaxis: { title: 'ė' },
+                    xaxis: { title: 'e', autorange: isAuto, range: isAuto ? undefined : [-30, 30] },
+                    yaxis: { title: '∫e', autorange: isAuto, range: isAuto ? undefined : [-100, 100] },
+                    zaxis: { title: 'ė', autorange: isAuto, range: isAuto ? undefined : [-30, 30] },
                     camera: { eye: {x: 1.5, y: 1.5, z: 0.5} }
                 },
                 showlegend: false
@@ -1016,21 +1252,24 @@
 
             // 6. Cập nhật đồ thị
             renderFrame++;
-            const maxPoints = 300;
+            
+            // Tính toán số lượng điểm tối đa dựa trên thời gian hiển thị (time window)
+            let maxPoints = Math.max(10, Math.ceil(displayTimeWindow / dt));
             
             let stateData = stateChart.data.datasets[0].data;
             stateData.push({x: x, y: v});
-            if(stateData.length > maxPoints) stateData.shift();
+            // Sử dụng vòng lặp while để xử lý trường hợp người dùng giảm thời gian hiển thị đột ngột
+            while(stateData.length > maxPoints) stateData.shift();
             
             if (surfaceType === 'linear') {
                 let phaseData = phaseChart.data.datasets[0].data;
                 phaseData.push({x: ctrl.e_ctrl, y: ctrl.de_ctrl});
-                if(phaseData.length > maxPoints) phaseData.shift();
+                while(phaseData.length > maxPoints) phaseData.shift();
             } else {
                 pidTrajectory.x.push(ctrl.e_ctrl);
                 pidTrajectory.y.push(int_e);
                 pidTrajectory.z.push(ctrl.de_ctrl);
-                if(pidTrajectory.x.length > maxPoints) {
+                while(pidTrajectory.x.length > maxPoints) {
                     pidTrajectory.x.shift();
                     pidTrajectory.y.shift();
                     pidTrajectory.z.shift();
@@ -1040,6 +1279,9 @@
             let timeLabels = timeChart.data.labels;
             let timeDataX = timeChart.data.datasets[0].data;
             let timeDataXd = timeChart.data.datasets[1].data;
+            
+            let errorLabels = errorChart.data.labels;
+            let errorData = errorChart.data.datasets[0].data;
             
             let ueqLabels = controlUeqChart.data.labels;
             let ueqData = controlUeqChart.data.datasets[0].data;
@@ -1057,6 +1299,9 @@
             timeDataX.push(x);
             timeDataXd.push(xd);
             
+            errorLabels.push(t_str);
+            errorData.push(ctrl.e_ctrl);
+            
             ueqLabels.push(t_str);
             ueqData.push(u_eq);
             
@@ -1067,10 +1312,13 @@
             uData.push(u);
             uDelayedData.push(u_delayed);
             
-            if(timeLabels.length > maxPoints) {
+            while(timeLabels.length > maxPoints) {
                 timeLabels.shift();
                 timeDataX.shift();
                 timeDataXd.shift();
+                
+                errorLabels.shift();
+                errorData.shift();
                 
                 ueqLabels.shift();
                 ueqData.shift();
@@ -1086,6 +1334,7 @@
             // Cập nhật lên canvas
             stateChart.update();
             timeChart.update();
+            errorChart.update();
             controlUeqChart.update();
             controlUswChart.update();
             controlUChart.update();
@@ -1213,6 +1462,9 @@
         });
 
         // Lắng nghe thay đổi ẩn/hiện đồ thị tín hiệu
+        document.getElementById('toggle-error').addEventListener('change', (e) => {
+            document.getElementById('container-error').classList.toggle('hidden', !e.target.checked);
+        });
         document.getElementById('toggle-ueq').addEventListener('change', (e) => {
             document.getElementById('container-ueq').classList.toggle('hidden', !e.target.checked);
         });
@@ -1221,6 +1473,20 @@
         });
         document.getElementById('toggle-u').addEventListener('change', (e) => {
             document.getElementById('container-u').classList.toggle('hidden', !e.target.checked);
+        });
+
+        // Lắng nghe thay đổi Tự động Scale từng biểu đồ
+        const scaleToggles = ['scale-state', 'scale-phase2d', 'scale-phase3d', 'scale-time', 'scale-error', 'scale-ueq', 'scale-usw', 'scale-u'];
+        scaleToggles.forEach(id => {
+            document.getElementById(id).addEventListener('change', updateChartScales);
+        });
+
+        // Lắng nghe thay đổi Cửa sổ thời gian hiển thị đồ thị
+        document.getElementById('input-time-window').addEventListener('input', (e) => {
+            let val = parseFloat(e.target.value);
+            if (!isNaN(val) && val > 0) {
+                displayTimeWindow = val;
+            }
         });
 
         // Lắng nghe thay đổi loại mặt trượt
@@ -1304,6 +1570,13 @@
         // Lắng nghe Bật/tắt Smith Predictor
         document.getElementById('toggle-sp').addEventListener('change', (e) => {
             spEnabled = e.target.checked;
+            if (spEnabled) {
+                document.getElementById('theory-sp').classList.remove('hidden');
+                document.getElementById('theory-no-sp').classList.add('hidden');
+            } else {
+                document.getElementById('theory-sp').classList.add('hidden');
+                document.getElementById('theory-no-sp').classList.remove('hidden');
+            }
             if(!isRunning) calculateAndRenderMath();
         });
 
@@ -1434,9 +1707,13 @@
             timeChart.data.datasets[0].data = [0];
             timeChart.data.datasets[1].data = [xd];
             
+            errorChart.data.labels = [0];
+            
             controlUeqChart.data.labels = [0];
             controlUswChart.data.labels = [0];
             controlUChart.data.labels = [0];
+            
+            updateChartScales(); // Áp dụng lại scale khi reset
             
             stateChart.update();
             phaseChart.update();
@@ -1444,6 +1721,9 @@
             
             updateSlidingSurfaceLine();
             let resetControl = calculateAndRenderMath(); // Tính lại bước 0
+            
+            errorChart.data.datasets[0].data = [resetControl.e_ctrl];
+            errorChart.update();
             
             controlUeqChart.data.datasets[0].data = [resetControl.u_eq];
             controlUeqChart.update();
@@ -1459,10 +1739,14 @@
         // Khởi tạo lần đầu
         updateVisibility();
         updateSlidingSurfaceLine();
+        updateChartScales();
         
         x_m = x; // Khởi tạo giá trị đo ban đầu
         v_m = v;
         let initialControl = calculateAndRenderMath();
+        
+        errorChart.data.datasets[0].data = [initialControl.e_ctrl];
+        errorChart.update();
         
         controlUeqChart.data.datasets[0].data = [initialControl.u_eq];
         controlUeqChart.update();
