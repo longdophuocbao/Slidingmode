@@ -600,23 +600,23 @@
         let surfaceType = 'linear'; // Lựa chọn: 'linear' hoặc 'pid'
         let reachingType = 'sign';  // Lựa chọn: 'sign' hoặc 'super_twisting'
 
-        let x = 10.0;    // Vị trí thực tế (Góc alpha ban đầu)
+        let x = 0.0;    // Vị trí thực tế (Góc alpha ban đầu)
         let v = 0.0;    // Vận tốc thực tế (alpha_dot)
         let t = 0.0;    // Thời gian
         
         // Trạng thái đo lường (có thể lẫn nhiễu hoặc đến từ Serial)
-        let x_m = 10.0;
+        let x_m = 0.0;
         let v_m = 0.0;
 
         // Trạng thái điều khiển (sau khi bù trễ)
-        let x_ctrl = 10.0;
+        let x_ctrl = 0.0;
         let v_ctrl = 0.0;
 
         // Smith Predictor models
         let spEnabled = false;
-        let x_hat = 10.0; // Mô hình dự đoán không trễ
+        let x_hat = 0.0; // Mô hình dự đoán không trễ
         let v_hat = 0.0;
-        let x_bar = 10.0; // Mô hình có trễ
+        let x_bar = 0.0; // Mô hình có trễ
         let v_bar = 0.0;
 
         let int_e = 0.0; // Tích phân sai số điều khiển
@@ -640,7 +640,7 @@
         // Cấu hình Phần cứng (Web Serial)
         let hardwareMode = false;
         let sendUToSerial = false;
-        let hw_x = 10.0;     // Biến alpha đọc từ COM
+        let hw_x = 0.0;      // Biến alpha đọc từ COM
         let hw_v = 0.0;      // Đạo hàm tự tính
         let hw_beta = 5.0;   // Biến beta đọc từ COM
         let lpf_alpha = 0.80; // Hệ số Low-pass filter
@@ -2126,20 +2126,20 @@
                 if (isRunning && btnPlay) btnPlay.click(); // Dừng nếu đang chạy
                 
                 // Đặt lại biến state
-                x = 10.0;
+                x = 0.0;
                 v = 0.0;
                 t = 0.0;
                 
                 if (!hardwareMode) {
-                    x_m = 10.0;
+                    x_m = 0.0;
                     v_m = 0.0;
                 }
                 
-                x_ctrl = 10.0;
+                x_ctrl = 0.0;
                 v_ctrl = 0.0;
-                x_hat = 10.0;
+                x_hat = 0.0;
                 v_hat = 0.0;
-                x_bar = 10.0;
+                x_bar = 0.0;
                 v_bar = 0.0;
                 
                 alpha_prev = 10.0;
