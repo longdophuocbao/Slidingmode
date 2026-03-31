@@ -184,7 +184,7 @@
 
                         <div class="space-y-2 mt-3">
                             <p><strong>b. Lực chuyển mạch (\(u_{sw}\)):</strong> Ép hệ thống lao về mặt trượt.</p>
-                            <p class="law-sign text-gray-700 pl-5">Luật Hàm Dấu: Tương tự, ép \(\dot{s} = -K \cdot \text{sgn}(s)\). Cần chia thêm cho \(K_d\) ở mẫu số. <br>\(\Rightarrow u_{sw} = -\frac{K}{b \cdot K_d} \text{sgn}(s)\)</p>
+                            <p class="law-sign text-gray-700 pl-5">Luật Hàm Dấu: Áp dụng phương pháp tiếp cận dạng số mũ, ép \(\dot{s} = -\eta s - K \cdot \text{sgn}(s)\). Cần chia thêm cho \(K_d\) ở mẫu số. <br>\(\Rightarrow u_{sw} = -\frac{1}{b \cdot K_d}(\eta s + K \text{sgn}(s))\)</p>
                             <p class="law-sta hidden text-gray-700 pl-5">Luật Super-Twisting (STA): Giúp giảm giật. <br>\(\Rightarrow u_{sw} = \frac{1}{b \cdot K_d}\left(-K \sqrt{|s|} \text{sgn}(s) + \int -K_2 \text{sgn}(s)dt \right)\)</p>
                         </div>
                     </div>
@@ -193,7 +193,6 @@
             </div>
         </div>
 
-        <!-- Thêm class items-start để position sticky hoạt động đúng -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
             <!-- Cột trái: Bảng điều khiển (Sticky khi scroll) -->
@@ -320,18 +319,22 @@
                         </div>
 
                         <!-- Params PID -->
-                        <div id="params-pid" class="hidden space-y-4">
+                        <div id="params-pid" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-2">
                             <div>
                                 <label class="block font-semibold mb-1">\(K_p\): <span id="val-kp" class="text-blue-600">2.000</span></label>
-                                <input type="range" id="input-kp" min="0.001" max="10" step="0.001" value="2.0" class="w-full">
+                                <input type="range" id="input-kp" min="0.001" max="200" step="0.001" value="2.0" class="w-full">
                             </div>
                             <div>
                                 <label class="block font-semibold mb-1">\(K_i\): <span id="val-ki" class="text-blue-600">0.500</span></label>
-                                <input type="range" id="input-ki" min="0.001" max="5" step="0.001" value="0.5" class="w-full">
+                                <input type="range" id="input-ki" min="0.001" max="200" step="0.001" value="0.5" class="w-full">
                             </div>
                             <div>
                                 <label class="block font-semibold mb-1">\(K_d\): <span id="val-kd" class="text-blue-600">1.000</span></label>
-                                <input type="range" id="input-kd" min="0.001" max="5" step="0.001" value="1.0" class="w-full">
+                                <input type="range" id="input-kd" min="0.001" max="200" step="0.001" value="1.0" class="w-full">
+                            </div>
+                            <div id="param-eta">
+                                <label class="block font-semibold mb-1">\(\eta\): <span id="val-eta" class="text-blue-600">1.000</span></label>
+                                <input type="range" id="input-eta" min="0.001" max="10" step="0.001" value="1.0" class="w-full">
                             </div>
                         </div>
                         <div>
@@ -413,7 +416,7 @@
                             <span>
                                 <span class="label-usw hidden" id="label-usw-linear-sign">6. ĐK chuyển mạch (\(u_{sw} = -\frac{K}{b}\text{sgn}(s)\)):</span>
                                 <span class="label-usw hidden" id="label-usw-linear-super_twisting">6. ĐK chuyển mạch (\(u_{sw} = \frac{1}{b}(-K\sqrt{|s|}\text{sgn}(s) + v)\)):</span>
-                                <span class="label-usw hidden" id="label-usw-pid-sign">6. ĐK chuyển mạch (\(u_{sw} = -\frac{K}{b \cdot K_d}\text{sgn}(s)\)):</span>
+                                <span class="label-usw hidden" id="label-usw-pid-sign">6. ĐK chuyển mạch (\(u_{sw} = -\frac{1}{b \cdot K_d}(\eta s + K\text{sgn}(s))\)):</span>
                                 <span class="label-usw hidden" id="label-usw-pid-super_twisting">6. ĐK chuyển mạch (\(u_{sw} = \frac{1}{b \cdot K_d}(-K\sqrt{|s|}\text{sgn}(s) + v)\)):</span>
                             </span>
                             <span class="text-right flex-shrink-0 w-full sm:w-auto mt-1 sm:mt-0"><span id="eq-usw">...</span> = <span id="calc-usw" class="highlight-value text-orange-600">5.000</span></span>
@@ -659,6 +662,7 @@
         let kp = 2.0;     // Cho PID SMC
         let ki = 0.5;
         let kd = 1.0;
+        let eta = 1.0;    // Hệ số eta (mới thêm cho PID)
         let K = 5.0;
         let K2 = 10.0;    // Hệ số cho trạng thái tích phân STA
 
@@ -1305,7 +1309,6 @@
             let e_ctrl = x_ctrl - xd;
             let de_ctrl = v_ctrl;
             let s, u_eq, u_sw, u;
-            
             let sgn_s;
             
             if (surfaceType === 'linear') {
@@ -1326,7 +1329,7 @@
                 sgn_s = s > 0 ? 1 : (s < 0 ? -1 : 0);
                 
                 if (reachingType === 'sign') {
-                    u_sw = (-K * sgn_s) / (b_sys * kd);
+                    u_sw = (-eta * s - K * sgn_s) / (b_sys * kd);
                 } else {
                     u_sw = (-K * Math.sqrt(Math.abs(s)) * sgn_s + v_sta) / (b_sys * kd);
                 }
@@ -1399,7 +1402,7 @@
                 
                 if (reachingType === 'sign') {
                     let eqUswEl = document.getElementById('eq-usw');
-                    if(eqUswEl) eqUswEl.textContent = `-${f(K)} × sgn(${f(s)}) / (${fb(b_sys)} × ${f(kd)})`;
+                    if(eqUswEl) eqUswEl.textContent = `-(${f(eta)}(${f(s)}) + ${f(K)}sgn(${f(s)})) / (${fb(b_sys)} × ${f(kd)})`;
                 } else {
                     let eqUswEl = document.getElementById('eq-usw');
                     if(eqUswEl) eqUswEl.textContent = `(-${f(K)}√|${f(s)}|sgn(${f(s)}) + ${f(v_sta)}) / (${fb(b_sys)} × ${f(kd)})`;
@@ -1704,6 +1707,16 @@
                 if(pSta) pSta.classList.remove('hidden');
                 let rVsta = document.getElementById('row-vsta');
                 if(rVsta) rVsta.classList.remove('hidden');
+            }
+
+            // Xử lý hiển thị biến eta chỉ cho PID + Sign
+            let paramEta = document.getElementById('param-eta');
+            if (paramEta) {
+                if (surfaceType === 'pid' && reachingType === 'sign') {
+                    paramEta.classList.remove('hidden');
+                } else {
+                    paramEta.classList.add('hidden');
+                }
             }
 
             // Cập nhật cụ thể dòng hiển thị U_sw
@@ -2056,6 +2069,17 @@
                 kd = parseFloat(e.target.value);
                 let vKd = document.getElementById('val-kd');
                 if(vKd) vKd.textContent = kd.toFixed(3);
+                updatePlotlySurface();
+                if(!isRunning) calculateAndRenderMath();
+            });
+        }
+
+        let etaInp = document.getElementById('input-eta');
+        if(etaInp) {
+            etaInp.addEventListener('input', (e) => {
+                eta = parseFloat(e.target.value);
+                let vEta = document.getElementById('val-eta');
+                if(vEta) vEta.textContent = eta.toFixed(3);
                 updatePlotlySurface();
                 if(!isRunning) calculateAndRenderMath();
             });
