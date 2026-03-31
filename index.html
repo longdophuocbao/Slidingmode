@@ -42,7 +42,7 @@
         <!-- Header -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <h1 class="text-3xl font-bold text-gray-900 mb-2">Mô phỏng & Tính toán SMC (Hệ SOPDT)</h1>
-            <p class="text-gray-600">Minh họa thuật toán Sliding Mode Control cho <strong>Hệ bậc hai có thời gian trễ (SOPDT)</strong>. Khám phá cách SMC kết hợp <strong>Smith Predictor</strong> xử lý nhiễu đo lường và thời gian trễ.</p>
+            <p class="text-gray-600">Minh họa thuật toán Sliding Mode Control cho <strong>Hệ bậc hai có thời gian trễ (SOPDT)</strong>. Hệ thống tự động tính toán góc nâng \(\alpha_{ref}\) dựa trên độ sâu và góc đo phụ \(\beta\).</p>
         </div>
 
         <!-- Phần 1: Tùy chọn Thuật toán & Lý thuyết (Full width) -->
@@ -97,39 +97,43 @@
                 <h2 class="text-xl font-bold mb-4 text-blue-700 border-b pb-2">1. Lý thuyết & Các bước tính toán chi tiết</h2>
                 <div class="text-sm space-y-5 text-gray-700 leading-relaxed">
                     
+                    <!-- Bước 1 -->
                     <div>
                         <h3 class="font-bold text-gray-800 text-base">Bước 1: Hiểu về Hệ thống (Plant)</h3>
-                        <p class="mt-1">Hệ thống ta đang điều khiển tuân theo phương trình động lực học (SOPDT): 
-                            <span class="bg-gray-100 px-2 py-1 rounded font-mono block mt-2 mb-2 text-center">\(\underbrace{\ddot{x}}_{\text{Gia tốc}} = \underbrace{-a_1 \dot{x}}_{\text{Lực cản}} \underbrace{- a_2 x}_{\text{Lực đàn hồi}} + \underbrace{b \cdot u(t-L)}_{\text{Lực điều khiển (bị trễ)}}\)</span>
+                        <p class="mt-1">Trạng thái đo lường hiện tại là góc \(\alpha\). Hệ thống đang điều khiển tuân theo phương trình động lực học (SOPDT): 
+                            <span class="bg-gray-100 px-2 py-1 rounded font-mono block mt-2 mb-2 text-center">\(\underbrace{\ddot{\alpha}}_{\text{Gia tốc}} = \underbrace{-a_1 \dot{\alpha}}_{\text{Lực cản}} \underbrace{- a_2 \alpha}_{\text{Lực đàn hồi}} + \underbrace{b \cdot u(t-L)}_{\text{Lực điều khiển (bị trễ)}}\)</span>
                         </p>
-                        <p>Trong thực tế, cảm biến đo lường luôn có sai số, nên tín hiệu ta nhận được là: \(x_m = x + noise\) và \(\dot{x}_m = \dot{x} + noise\).</p>
+                        <p>Trong thực tế, cảm biến đo lường luôn có sai số, nên tín hiệu ta nhận được là: \(\alpha_m = \alpha + noise\) và \(\dot{\alpha}_m = \dot{\alpha} + noise\).</p>
                     </div>
 
+                    <!-- Bước 2 -->
                     <div>
                         <h3 class="font-bold text-gray-800 text-base">Bước 2: Xử lý thời gian trễ (Smith Predictor)</h3>
-                        <p class="mt-1 mb-2">Vì lệnh điều khiển \(u\) mất một thời gian \(L\) mới tác động được lên hệ thống, nếu ta dùng ngay dữ liệu hiện tại để tính toán, hệ thống sẽ bị phản ứng thái quá (overshoot) và dao động. Bộ bù trễ giải quyết bằng cách:</p>
+                        <p class="mt-1 mb-2">Vì lệnh điều khiển \(u\) mất một thời gian \(L\) mới tác động được lên hệ thống, nếu ta dùng ngay dữ liệu hiện tại để tính toán, hệ thống sẽ bị dao động. Bộ bù trễ giải quyết bằng cách:</p>
                         <div id="theory-sp" class="bg-purple-50 p-4 rounded border border-purple-200 hidden shadow-inner space-y-2 text-purple-900">
                             <ul class="list-disc pl-5 space-y-1">
-                                <li><strong>Mô phỏng 1 hệ lý tưởng (không trễ):</strong> \(\ddot{\hat{x}} = -a_1 \dot{\hat{x}} - a_2 \hat{x} + b \cdot u(t)\)</li>
-                                <li><strong>Mô phỏng 1 hệ có trễ y như thực tế:</strong> \(\ddot{\bar{x}} = -a_1 \dot{\bar{x}} - a_2 \bar{x} + b \cdot u(t-L)\)</li>
-                                <li><strong>Tổng hợp trạng thái để điều khiển:</strong> Ta lấy dự đoán lý tưởng cộng với phần sai lệch thực tế. <br>
-                                \(\Rightarrow x_{ctrl} = \hat{x} + (x_m - \bar{x})\) và \(\dot{x}_{ctrl} = \dot{\hat{x}} + (\dot{x}_m - \dot{\bar{x}})\)
+                                <li><strong>Mô phỏng 1 hệ lý tưởng (không trễ):</strong> \(\ddot{\hat{\alpha}} = -a_1 \dot{\hat{\alpha}} - a_2 \hat{\alpha} + b \cdot u(t)\)</li>
+                                <li><strong>Mô phỏng 1 hệ có trễ y như thực tế:</strong> \(\ddot{\bar{\alpha}} = -a_1 \dot{\bar{\alpha}} - a_2 \bar{\alpha} + b \cdot u(t-L)\)</li>
+                                <li><strong>Tổng hợp trạng thái để điều khiển:</strong> Lấy dự đoán cộng với phần sai lệch thực tế. <br>
+                                \(\Rightarrow \alpha_{ctrl} = \hat{\alpha} + (\alpha_m - \bar{\alpha})\) và \(\dot{\alpha}_{ctrl} = \dot{\hat{\alpha}} + (\dot{\alpha}_m - \dot{\bar{\alpha}})\)
                                 </li>
                             </ul>
                         </div>
-                        <p id="theory-no-sp" class="bg-gray-50 p-3 rounded border border-gray-200 text-gray-600 italic">Hiện tại SP đang tắt. Bộ điều khiển sử dụng trực tiếp dữ liệu đo được: \(x_{ctrl} = x_m\).</p>
+                        <p id="theory-no-sp" class="bg-gray-50 p-3 rounded border border-gray-200 text-gray-600 italic">Hiện tại SP đang tắt. Bộ điều khiển sử dụng trực tiếp dữ liệu góc đo được: \(\alpha_{ctrl} = \alpha_m\).</p>
                     </div>
 
+                    <!-- Bước 3 -->
                     <div>
                         <h3 class="font-bold text-gray-800 text-base">Bước 3: Định nghĩa Sai số (Error)</h3>
-                        <p class="mt-1">Mục tiêu là đưa vị trí hệ thống (\(x_{ctrl}\)) về vị trí đích mong muốn (\(x_d\)). Ta gọi độ lệch này là Sai số \(e\).</p>
+                        <p class="mt-1">Mục tiêu là đưa góc hiện tại (\(\alpha_{ctrl}\)) bám theo góc tham chiếu (\(\alpha_{ref}\)). \(\alpha_{ref}\) được tính toán tự động qua nội suy bậc 3 dựa trên <strong>Độ sâu mong muốn</strong> và <strong>Góc đo phụ \(\beta\)</strong>. Ta gọi độ lệch này là Sai số \(e\).</p>
                         <ul class="list-disc pl-5 mt-1">
-                            <li>Sai số vị trí: \(e = x_{ctrl} - x_d\)</li>
-                            <li>Đạo hàm sai số (vận tốc lỗi): \(\dot{e} = \dot{x}_{ctrl} - \dot{x}_d = \dot{x}_{ctrl}\) (vì đích \(x_d\) đứng yên nên \(\dot{x}_d = 0\)).</li>
-                            <li>Đạo hàm bậc hai (gia tốc lỗi): \(\ddot{e} = \ddot{x}_{ctrl}\)</li>
+                            <li>Sai số góc: \(e = \alpha_{ctrl} - \alpha_{ref}\)</li>
+                            <li>Đạo hàm sai số: \(\dot{e} \approx \dot{\alpha}_{ctrl}\) (Giả sử \(\alpha_{ref}\) thay đổi đủ chậm).</li>
+                            <li>Đạo hàm bậc hai: \(\ddot{e} \approx \ddot{\alpha}_{ctrl}\)</li>
                         </ul>
                     </div>
 
+                    <!-- Bước 4 & 5 (Tùy thuộc vào việc chọn Linear hay PID) -->
                     <div id="theory-linear" class="bg-blue-50 p-4 rounded-lg border border-blue-200 shadow-inner">
                         <h3 class="font-bold text-blue-800 text-base">Bước 4: Thiết lập Mặt trượt Tuyến tính (Linear Surface)</h3>
                         <p class="mt-1 mb-2">Thay vì điều khiển \(e\) và \(\dot{e}\) riêng lẻ, SMC gộp chúng thành một biến duy nhất gọi là Mặt trượt \(s\):</p>
@@ -140,13 +144,13 @@
                         <p class="mt-1">Tín hiệu tổng \(u\) bao gồm hai phần: <strong>\(u = u_{eq} + u_{sw}\)</strong></p>
                         
                         <div class="space-y-2 mt-2">
-                            <p><strong>a. Lực tương đương (\(u_{eq}\)):</strong> Làm nhiệm vụ "triệt tiêu" các tác động tự nhiên của hệ thống (lực cản, lò xo) để giữ cho \(s\) không đổi (\(\dot{s} = 0\)).</p>
+                            <p><strong>a. Lực tương đương (\(u_{eq}\)):</strong> Làm nhiệm vụ "triệt tiêu" các tác động tự nhiên của hệ thống (lực cản, đàn hồi) để giữ cho \(s\) không đổi (\(\dot{s} = 0\)).</p>
                             <ul class="list-decimal pl-5 text-gray-700 text-xs md:text-sm">
-                                <li>Lấy đạo hàm \(s\): \(\dot{s} = \ddot{e} + \lambda\dot{e} = \ddot{x}_{ctrl} + \lambda\dot{x}_{ctrl}\)</li>
-                                <li>Thế pt động lực học vào \(\ddot{x}_{ctrl}\): \(\dot{s} = (-a_1\dot{x}_{ctrl} - a_2 x_{ctrl} + b \cdot u) + \lambda\dot{x}_{ctrl}\)</li>
+                                <li>Lấy đạo hàm \(s\): \(\dot{s} = \ddot{e} + \lambda\dot{e} = \ddot{\alpha}_{ctrl} + \lambda\dot{\alpha}_{ctrl}\)</li>
+                                <li>Thế pt động lực học vào \(\ddot{\alpha}_{ctrl}\): \(\dot{s} = (-a_1\dot{\alpha}_{ctrl} - a_2 \alpha_{ctrl} + b \cdot u) + \lambda\dot{\alpha}_{ctrl}\)</li>
                                 <li>Giải phương trình \(\dot{s} = 0\) để tìm \(u_{eq}\): <br>
-                                    \(\Rightarrow b \cdot u_{eq} = a_1\dot{x}_{ctrl} + a_2 x_{ctrl} - \lambda\dot{x}_{ctrl}\) <br>
-                                    \(\Rightarrow u_{eq} = \frac{1}{b}(a_1\dot{x}_{ctrl} + a_2 x_{ctrl} - \lambda\dot{x}_{ctrl})\)
+                                    \(\Rightarrow b \cdot u_{eq} = a_1\dot{\alpha}_{ctrl} + a_2 \alpha_{ctrl} - \lambda\dot{\alpha}_{ctrl}\) <br>
+                                    \(\Rightarrow u_{eq} = \frac{1}{b}(a_1\dot{\alpha}_{ctrl} + a_2 \alpha_{ctrl} - \lambda\dot{\alpha}_{ctrl})\)
                                 </li>
                             </ul>
                         </div>
@@ -169,11 +173,11 @@
                         <div class="space-y-2 mt-2">
                             <p><strong>a. Lực tương đương (\(u_{eq}\)):</strong> Giải bài toán \(\dot{s} = 0\) để giữ hệ thống trượt ổn định.</p>
                             <ul class="list-decimal pl-5 text-gray-700 text-xs md:text-sm">
-                                <li>Lấy đạo hàm \(s\): \(\dot{s} = K_p\dot{e} + K_i e + K_d\ddot{e} = K_p\dot{x}_{ctrl} + K_i e + K_d\ddot{x}_{ctrl}\)</li>
-                                <li>Thế pt động lực học: \(\dot{s} = K_p\dot{x}_{ctrl} + K_i e + K_d(-a_1\dot{x}_{ctrl} - a_2 x_{ctrl} + b \cdot u)\)</li>
+                                <li>Lấy đạo hàm \(s\): \(\dot{s} = K_p\dot{e} + K_i e + K_d\ddot{e} = K_p\dot{\alpha}_{ctrl} + K_i e + K_d\ddot{\alpha}_{ctrl}\)</li>
+                                <li>Thế pt động lực học: \(\dot{s} = K_p\dot{\alpha}_{ctrl} + K_i e + K_d(-a_1\dot{\alpha}_{ctrl} - a_2 \alpha_{ctrl} + b \cdot u)\)</li>
                                 <li>Giải phương trình \(\dot{s} = 0\) để tìm \(u_{eq}\): <br>
-                                    \(\Rightarrow K_d(b \cdot u_{eq}) = K_d(a_1\dot{x}_{ctrl} + a_2 x_{ctrl}) - K_p\dot{x}_{ctrl} - K_i e\) <br>
-                                    \(\Rightarrow u_{eq} = \frac{1}{b}\left(a_1\dot{x}_{ctrl} + a_2 x_{ctrl} - \frac{K_p}{K_d}\dot{x}_{ctrl} - \frac{K_i}{K_d}e\right)\)
+                                    \(\Rightarrow K_d(b \cdot u_{eq}) = K_d(a_1\dot{\alpha}_{ctrl} + a_2 \alpha_{ctrl}) - K_p\dot{\alpha}_{ctrl} - K_i e\) <br>
+                                    \(\Rightarrow u_{eq} = \frac{1}{b}\left(a_1\dot{\alpha}_{ctrl} + a_2 \alpha_{ctrl} - \frac{K_p}{K_d}\dot{\alpha}_{ctrl} - \frac{K_i}{K_d}e\right)\)
                                 </li>
                             </ul>
                         </div>
@@ -193,7 +197,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
             <!-- Cột trái: Bảng điều khiển (Sticky khi scroll) -->
-            <div class="lg:col-span-5 space-y-6 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] overflow-y-auto custom-scrollbar pb-4">
+            <div class="lg:col-span-4 space-y-6 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] overflow-y-auto custom-scrollbar pb-4">
                 
                 <!-- Bảng điều khiển -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -202,7 +206,7 @@
                     <!-- Kết nối Phần cứng (COM Port) -->
                     <div class="mb-4 p-4 bg-gray-100 rounded-lg border border-gray-300 shadow-inner">
                         <div class="flex items-center justify-between mb-3">
-                            <h3 class="font-bold text-gray-800 text-sm">Kết nối Phần cứng (Web Serial API):</h3>
+                            <h3 class="font-bold text-gray-800 text-sm">Kết nối Phần cứng (Web Serial):</h3>
                             <span id="serial-status" class="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded">Chưa kết nối</span>
                         </div>
                         
@@ -216,7 +220,7 @@
                         </div>
                         
                         <div class="mt-3 flex flex-col space-y-2">
-                            <label class="inline-flex items-center cursor-pointer" title="Sử dụng dữ liệu x nhận từ COM thay vì mô phỏng">
+                            <label class="inline-flex items-center cursor-pointer" title="Sử dụng dữ liệu alpha, beta nhận từ COM thay vì mô phỏng">
                                 <input type="checkbox" id="toggle-hardware-mode" class="form-checkbox text-gray-600 w-5 h-5" disabled>
                                 <span class="ml-2 font-medium text-gray-700 text-sm">Chạy thực tế (Hardware Mode)</span>
                             </label>
@@ -225,13 +229,69 @@
                                 <span class="ml-2 font-medium text-red-700 text-sm">Xuất tín hiệu ĐK (u) xuống COM</span>
                             </label>
                         </div>
-                        <p class="text-xs text-gray-500 mt-2 font-mono">* Nhận: <code class="bg-white px-1">x\n</code> | Gửi: <code class="bg-white px-1">u\n</code> (Baud: 115200)</p>
+                        <p class="text-[11px] text-gray-500 mt-2 font-mono">* Nhận: <code class="bg-white px-1">alpha,beta\n</code> | Gửi: <code class="bg-white px-1">u\n</code> (Baud: 115200)</p>
+                    </div>
+
+                    <!-- Lọc Nhiễu Đo Lường & Low-pass Filter -->
+                    <div class="mb-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200 shadow-inner transition-colors duration-300" id="sensor-config-box">
+                        
+                        <!-- Chế độ Mô phỏng: Nhiễu Đo Lường -->
+                        <div id="sim-noise-config">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="font-bold text-yellow-800 text-sm">Nhiễu Đo Lường:</h3>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="toggle-noise" class="form-checkbox text-yellow-600 w-5 h-5">
+                                </label>
+                            </div>
+                            <div class="space-y-2" id="noise-params" style="opacity: 0.5; pointer-events: none;">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-700">Biên độ \(\alpha\):</span>
+                                    <input type="number" id="input-noise-x" step="0.01" min="0" value="0.05" class="w-16 border border-gray-300 rounded px-1 text-xs text-right">
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-700">Biên độ \(\dot{\alpha}\):</span>
+                                    <input type="number" id="input-noise-v" step="0.01" min="0" value="0.10" class="w-16 border border-gray-300 rounded px-1 text-xs text-right">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Chế độ Thực tế: Lọc Thông Thấp -->
+                        <div id="hw-filter-config" class="hidden">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-bold text-indigo-800 text-sm">Lọc Thông Thấp (\(\dot{\alpha}\)):</h3>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block font-semibold text-xs text-gray-700">Hệ số lọc \(\lambda_f\): <span id="val-lpf" class="text-indigo-600">0.80</span></label>
+                                <input type="range" id="input-lpf" min="0.0" max="0.99" step="0.01" value="0.80" class="w-full">
+                                <p class="text-[10px] text-gray-500 italic leading-tight">\(v_m = \lambda_f \cdot v_{m-1} + (1-\lambda_f) \cdot v_{raw}\)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MỤC TIÊU ĐIỀU KHIỂN (DEPTH & BETA) -->
+                    <div class="mb-4 space-y-4 text-sm">
+                        <div class="grid grid-cols-2 gap-3 p-3 bg-green-50 border border-green-200 rounded-lg shadow-inner">
+                            <div class="col-span-2 sm:col-span-1">
+                                <label class="block font-semibold mb-1 text-green-900 text-xs">Độ sâu mm (Depth): <span id="val-depth" class="text-green-700 font-bold">40.000</span></label>
+                                <input type="range" id="input-depth" min="40" max="150" step="0.001" value="40.0" class="w-full">
+                            </div>
+                            <div class="col-span-2 sm:col-span-1">
+                                <label class="block font-semibold mb-1 text-green-900 text-xs">Góc phụ (\(\beta\)): <span id="val-beta" class="text-green-700 font-bold">5.000</span>°</label>
+                                <input type="range" id="input-beta" min="0" max="45" step="0.001" value="5.0" class="w-full">
+                            </div>
+                            <div class="col-span-2 pt-2 border-t border-green-200 text-center flex flex-col">
+                                <div>
+                                    <span class="font-bold text-gray-700 text-sm">Góc tham chiếu \(\alpha_{ref}\): </span>
+                                    <span id="val-alpha-ref" class="text-lg font-bold text-green-600">10.000</span><span class="text-green-600">°</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Thông số SOPDT -->
                     <div class="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200 shadow-inner">
                         <h3 class="font-bold text-blue-800 mb-3">Thông số Hệ thống (SOPDT):</h3>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block font-semibold mb-1 text-xs text-gray-700">\(a_1\):</label>
                                 <input type="number" id="input-a1" step="any" value="1.57677621" class="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition">
@@ -251,49 +311,8 @@
                         </div>
                     </div>
 
-                    <!-- Lọc Nhiễu Đo Lường & Low-pass Filter -->
-                    <div class="mb-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200 shadow-inner transition-colors duration-300" id="sensor-config-box">
-                        
-                        <!-- Chế độ Mô phỏng: Nhiễu Đo Lường -->
-                        <div id="sim-noise-config">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="font-bold text-yellow-800 text-sm">Nhiễu Đo Lường:</h3>
-                                <label class="inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="toggle-noise" class="form-checkbox text-yellow-600 w-5 h-5">
-                                </label>
-                            </div>
-                            <div class="space-y-2" id="noise-params" style="opacity: 0.5; pointer-events: none;">
-                                <div class="flex justify-between">
-                                    <span class="text-xs text-gray-700">Biên độ \(x\):</span>
-                                    <input type="number" id="input-noise-x" step="0.01" min="0" value="0.05" class="w-16 border border-gray-300 rounded px-1 text-xs text-right">
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-xs text-gray-700">Biên độ \(\dot{x}\):</span>
-                                    <input type="number" id="input-noise-v" step="0.01" min="0" value="0.10" class="w-16 border border-gray-300 rounded px-1 text-xs text-right">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Chế độ Thực tế: Lọc Thông Thấp -->
-                        <div id="hw-filter-config" class="hidden">
-                            <div class="flex items-center justify-between mb-2">
-                                <h3 class="font-bold text-indigo-800 text-sm">Lọc Thông Thấp (\(\dot{x}\)):</h3>
-                            </div>
-                            <div class="space-y-2">
-                                <label class="block font-semibold text-xs text-gray-700">Hệ số lọc \(\alpha\): <span id="val-lpf" class="text-indigo-600">0.80</span></label>
-                                <input type="range" id="input-lpf" min="0.0" max="0.99" step="0.01" value="0.80" class="w-full">
-                                <p class="text-[10px] text-gray-500 italic leading-tight">\(v_m = \alpha \cdot v_{m-1} + (1-\alpha) \cdot v_{raw}\)</p>
-                            </div>
-                        </div>
-                        
-                    </div>
-
+                    <!-- PARAMS BỘ ĐIỀU KHIỂN -->
                     <div class="space-y-4 text-sm mt-4">
-                        <div>
-                            <label class="block font-semibold mb-1">Vị trí mong muốn (\(x_d\)): <span id="val-xd" class="text-blue-600">10.000</span> deg</label>
-                            <input type="range" id="input-xd" min="0" max="20" step="0.001" value="10.0" class="w-full">
-                        </div>
-                        
                         <!-- Params Linear -->
                         <div id="params-linear">
                             <label class="block font-semibold mb-1">Độ dốc mặt trượt (\(\lambda\)): <span id="val-lambda" class="text-blue-600">2.000</span></label>
@@ -301,7 +320,7 @@
                         </div>
 
                         <!-- Params PID -->
-                        <div id="params-pid" class="hidden grid grid-cols-3 gap-2">
+                        <div id="params-pid" class="hidden space-y-4">
                             <div>
                                 <label class="block font-semibold mb-1">\(K_p\): <span id="val-kp" class="text-blue-600">2.000</span></label>
                                 <input type="range" id="input-kp" min="0.001" max="10" step="0.001" value="2.0" class="w-full">
@@ -324,17 +343,18 @@
                             <label class="block font-semibold mb-1">Hệ số tích phân STA (\(K_2\)): <span id="val-k2" class="text-blue-600">10.000</span></label>
                             <input type="range" id="input-k2" min="0.001" max="50" step="0.001" value="10.0" class="w-full">
                         </div>
+                        
                         <div id="sim-controls" class="flex space-x-2 pt-2">
                             <button id="btn-play" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded font-semibold transition">▶ Chạy tự động</button>
-                            <button id="btn-step" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded font-semibold transition">⏭ Chạy 1 bước</button>
-                            <button id="btn-reset" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded font-semibold transition">↻ Reset</button>
+                            <button id="btn-step" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-2 rounded font-semibold transition text-xs">⏭ 1 bước</button>
+                            <button id="btn-reset" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-3 rounded font-semibold transition">↻ Reset</button>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Cột phải: Tính toán Live & Đồ thị -->
-            <div class="lg:col-span-7 space-y-6">
+            <div class="lg:col-span-8 space-y-6">
                 
                 <!-- Tính toán từng bước -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-blue-200 ring-2 ring-blue-50">
@@ -345,63 +365,66 @@
                     
                     <div class="space-y-2 text-sm md:text-base font-mono bg-gray-50 p-4 rounded border border-gray-200">
                         <div class="calc-row">
-                            <span>1. Trạng thái ĐO LƯỜNG <span id="noise-badge" class="hidden text-xs text-yellow-600 font-bold ml-1 bg-yellow-100 px-1 rounded">(Có Nhiễu)</span><span id="hardware-badge" class="hidden text-xs text-indigo-600 font-bold ml-1 bg-indigo-100 px-1 rounded">(Phần cứng)</span>:</span>
-                            <span class="text-right">\(x_m =\) <span id="calc-xm" class="highlight-value">0.000</span>, \(\dot{x}_m =\) <span id="calc-vm" class="highlight-value">0.000</span></span>
+                            <span class="flex flex-col">
+                                <span>1. Trạng thái ĐO LƯỜNG <span id="noise-badge" class="hidden text-xs text-yellow-600 font-bold ml-1 bg-yellow-100 px-1 rounded">(Có Nhiễu)</span><span id="hardware-badge" class="hidden text-xs text-indigo-600 font-bold ml-1 bg-indigo-100 px-1 rounded">(Phần cứng)</span>:</span>
+                                <span class="text-xs text-teal-600 font-bold mt-1">Độ sâu ước lượng \(\approx\) <span id="calc-depth">40.000</span> mm</span>
+                            </span>
+                            <span class="text-right flex-shrink-0">\(\alpha_m =\) <span id="calc-xm" class="highlight-value">0.000</span>, \(\dot{\alpha}_m =\) <span id="calc-vm" class="highlight-value">0.000</span></span>
                         </div>
                         
                         <!-- Smith Predictor Row -->
                         <div class="calc-row bg-purple-50 hidden" id="row-sp">
-                            <span>* Dự đoán SP (\(x_{ctrl} = \hat{x} + x_m - \bar{x}\)):</span>
-                            <span class="text-right">\(x_{ctrl} =\) <span id="calc-xctrl-sp" class="highlight-value text-purple-700">0.000</span></span>
+                            <span>* Dự đoán SP (\(\alpha_{ctrl} = \hat{\alpha} + \alpha_m - \bar{\alpha}\)):</span>
+                            <span class="text-right flex-shrink-0">\(\alpha_{ctrl} =\) <span id="calc-xctrl-sp" class="highlight-value text-purple-700">0.000</span></span>
                         </div>
 
                         <div class="calc-row">
-                            <span>2. Trạng thái ĐIỀU KHIỂN (\(x_{ctrl}\)):</span>
-                            <span class="text-right">\(x_{ctrl} =\) <span id="calc-xctrl" class="highlight-value">0.000</span>, \(\dot{x}_{ctrl} =\) <span id="calc-vctrl" class="highlight-value">0.000</span></span>
+                            <span>2. Trạng thái ĐIỀU KHIỂN (\(\alpha_{ctrl}\)):</span>
+                            <span class="text-right flex-shrink-0">\(\alpha_{ctrl} =\) <span id="calc-xctrl" class="highlight-value">0.000</span>, \(\dot{\alpha}_{ctrl} =\) <span id="calc-vctrl" class="highlight-value">0.000</span></span>
                         </div>
 
                         <div class="calc-row">
-                            <span>3. Sai số (\(e = x_{ctrl} - x_d\)):</span>
-                            <span class="text-right"><span id="eq-e">0.000 - 10.000</span> = <span id="calc-e" class="highlight-value text-red-600">-10.000</span></span>
+                            <span>3. Sai số (\(e = \alpha_{ctrl} - \alpha_{ref}\)):</span>
+                            <span class="text-right flex-shrink-0"><span id="eq-e">0.000 - 10.000</span> = <span id="calc-e" class="highlight-value text-red-600">-10.000</span></span>
                         </div>
                         <div class="calc-row hidden" id="row-inte">
                             <span>* Tích phân sai số (\(\int e dt\)):</span>
-                            <span class="text-right">\(\sum e \cdot dt =\) <span id="calc-inte" class="highlight-value text-amber-600">0.000</span></span>
+                            <span class="text-right flex-shrink-0">\(\sum e \cdot dt =\) <span id="calc-inte" class="highlight-value text-amber-600">0.000</span></span>
                         </div>
                         <div class="calc-row bg-blue-50 p-2 rounded -mx-2 px-2">
                             <span class="font-bold">
-                                <span class="label-linear">4. Mặt trượt (\(s = \dot{x}_{ctrl} + \lambda e\)):</span>
-                                <span class="label-pid hidden">4. Mặt trượt (\(s = K_p e + K_i \int e dt + K_d \dot{x}_{ctrl}\)):</span>
+                                <span class="label-linear">4. Mặt trượt (\(s = \dot{\alpha}_{ctrl} + \lambda e\)):</span>
+                                <span class="label-pid hidden">4. Mặt trượt (\(s = K_p e + K_i \int e dt + K_d \dot{\alpha}_{ctrl}\)):</span>
                             </span>
-                            <span class="text-right"><span id="eq-s">...</span> = <span id="calc-s" class="highlight-value text-blue-700">-4.000</span></span>
+                            <span class="text-right flex-shrink-0"><span id="eq-s">...</span> = <span id="calc-s" class="highlight-value text-blue-700">-4.000</span></span>
                         </div>
                         <div class="calc-row hidden" id="row-vsta">
                             <span>* Trạng thái STA (\(v\)):</span>
-                            <span class="text-right">\(\sum -K_2 \text{sgn}(s) dt =\) <span id="calc-vsta" class="highlight-value text-purple-600">0.000</span></span>
+                            <span class="text-right flex-shrink-0">\(\sum -K_2 \text{sgn}(s) dt =\) <span id="calc-vsta" class="highlight-value text-purple-600">0.000</span></span>
                         </div>
-                        <div class="calc-row">
+                        <div class="calc-row flex-col sm:flex-row items-start sm:items-center">
                             <span>
                                 <span class="label-linear">5. ĐK tương đương (\(u_{eq}\)):</span>
                                 <span class="label-pid hidden">5. ĐK tương đương (\(u_{eq}\)):</span>
                             </span>
-                            <span class="text-right"><span id="eq-ueq">...</span> = <span id="calc-ueq" class="highlight-value">0.000</span></span>
+                            <span class="text-right flex-shrink-0 w-full sm:w-auto mt-1 sm:mt-0"><span id="eq-ueq">...</span> = <span id="calc-ueq" class="highlight-value">0.000</span></span>
                         </div>
-                        <div class="calc-row">
+                        <div class="calc-row flex-col sm:flex-row items-start sm:items-center">
                             <span>
                                 <span class="label-usw hidden" id="label-usw-linear-sign">6. ĐK chuyển mạch (\(u_{sw} = -\frac{K}{b}\text{sgn}(s)\)):</span>
                                 <span class="label-usw hidden" id="label-usw-linear-super_twisting">6. ĐK chuyển mạch (\(u_{sw} = \frac{1}{b}(-K\sqrt{|s|}\text{sgn}(s) + v)\)):</span>
                                 <span class="label-usw hidden" id="label-usw-pid-sign">6. ĐK chuyển mạch (\(u_{sw} = -\frac{K}{b \cdot K_d}\text{sgn}(s)\)):</span>
                                 <span class="label-usw hidden" id="label-usw-pid-super_twisting">6. ĐK chuyển mạch (\(u_{sw} = \frac{1}{b \cdot K_d}(-K\sqrt{|s|}\text{sgn}(s) + v)\)):</span>
                             </span>
-                            <span class="text-right"><span id="eq-usw">...</span> = <span id="calc-usw" class="highlight-value text-orange-600">5.000</span></span>
+                            <span class="text-right flex-shrink-0 w-full sm:w-auto mt-1 sm:mt-0"><span id="eq-usw">...</span> = <span id="calc-usw" class="highlight-value text-orange-600">5.000</span></span>
                         </div>
                         <div class="calc-row bg-green-50 p-2 rounded -mx-2 px-2 border-t-2 border-green-200">
                             <span class="font-bold text-green-800">7. Tín hiệu tổng sinh ra (\(u = u_{eq} + u_{sw}\)):</span>
-                            <span class="text-right"><span id="eq-u">0.000 + 5.000</span> = <span id="calc-u" class="text-lg font-bold text-green-700">5.000</span></span>
+                            <span class="text-right flex-shrink-0"><span id="eq-u">0.000 + 5.000</span> = <span id="calc-u" class="text-lg font-bold text-green-700">5.000</span></span>
                         </div>
                         <div class="calc-row text-xs text-gray-500 italic mt-2">
                             * Hệ thống nhận được: \(u_{delayed} = u(t-L) = \) <span id="calc-udelayed" class="font-bold">0.000</span><br>
-                            * Trạng thái THỰC TẾ mới: <span id="calc-status-bottom">\(\ddot{x} = -a_1\dot{x} - a_2 x + b \cdot u_{delayed}\)</span>
+                            * Trạng thái THỰC TẾ mới: <span id="calc-status-bottom">\(\ddot{\alpha} = -a_1\dot{\alpha} - a_2 \alpha + b \cdot u_{delayed}\)</span>
                         </div>
                     </div>
                 </div>
@@ -409,23 +432,23 @@
                 <!-- Đồ thị -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative">
-                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1">
+                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1 shadow-sm border border-gray-200">
                             <label class="inline-flex items-center cursor-pointer" title="Tự động Scale Trục">
-                                <input type="checkbox" id="scale-state" class="form-checkbox text-indigo-600 w-4 h-4" checked>
-                                <span class="ml-1 text-xs font-bold text-indigo-600">Auto</span>
+                                <input type="checkbox" id="scale-state" class="form-checkbox text-indigo-600 w-3 h-3" checked>
+                                <span class="ml-1 text-[10px] font-bold text-indigo-600">Auto</span>
                             </label>
                         </div>
-                        <h3 class="font-bold text-center text-gray-700 mb-2">Mặt phẳng trạng thái THỰC (x, \(\dot{x}\))</h3>
+                        <h3 class="font-bold text-center text-gray-700 mb-2">Mặt phẳng trạng thái THỰC (\(\alpha\), \(\dot{\alpha}\))</h3>
                         <canvas id="stateChart" height="250"></canvas>
-                        <p class="text-xs text-center text-gray-500 mt-2">Trục X: Vị trí \(x\) | Trục Y: Vận tốc \(\dot{x}\)<br>Dấu thập: Vị trí đích đến \(x_d\)</p>
+                        <p class="text-xs text-center text-gray-500 mt-2">Trục X: Góc \(\alpha\) | Trục Y: Vận tốc \(\dot{\alpha}\)<br>Dấu thập: Góc đích \(\alpha_{ref}\)</p>
                     </div>
                     
                     <!-- Container Quỹ đạo 2D (Linear) -->
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative" id="phase2d-container">
-                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1">
+                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1 shadow-sm border border-gray-200">
                             <label class="inline-flex items-center cursor-pointer" title="Tự động Scale Trục">
-                                <input type="checkbox" id="scale-phase2d" class="form-checkbox text-indigo-600 w-4 h-4" checked>
-                                <span class="ml-1 text-xs font-bold text-indigo-600">Auto</span>
+                                <input type="checkbox" id="scale-phase2d" class="form-checkbox text-indigo-600 w-3 h-3" checked>
+                                <span class="ml-1 text-[10px] font-bold text-indigo-600">Auto</span>
                             </label>
                         </div>
                         <h3 class="font-bold text-center text-gray-700 mb-2">Quỹ đạo sai số (e, \(\dot{e}\))</h3>
@@ -435,10 +458,10 @@
 
                     <!-- Container Quỹ đạo 3D (PID) -->
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hidden relative" id="phase3d-container">
-                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1">
+                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1 shadow-sm border border-gray-200">
                             <label class="inline-flex items-center cursor-pointer" title="Tự động Scale Trục">
-                                <input type="checkbox" id="scale-phase3d" class="form-checkbox text-indigo-600 w-4 h-4" checked>
-                                <span class="ml-1 text-xs font-bold text-indigo-600">Auto</span>
+                                <input type="checkbox" id="scale-phase3d" class="form-checkbox text-indigo-600 w-3 h-3" checked>
+                                <span class="ml-1 text-[10px] font-bold text-indigo-600">Auto</span>
                             </label>
                         </div>
                         <h3 class="font-bold text-center text-gray-700 mb-2">Mặt trượt 3D (PID)</h3>
@@ -447,34 +470,51 @@
                     </div>
 
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2 relative">
-                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1">
+                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1 shadow-sm border border-gray-200">
                             <label class="inline-flex items-center cursor-pointer" title="Tự động Scale Trục">
-                                <input type="checkbox" id="scale-time" class="form-checkbox text-indigo-600 w-4 h-4" checked>
-                                <span class="ml-1 text-xs font-bold text-indigo-600">Auto</span>
+                                <input type="checkbox" id="scale-time" class="form-checkbox text-indigo-600 w-3 h-3" checked>
+                                <span class="ml-1 text-[10px] font-bold text-indigo-600">Auto</span>
                             </label>
                         </div>
-                        <h3 class="font-bold text-center text-gray-700 mb-2">Đáp ứng thời gian (Time Response)</h3>
+                        <h3 class="font-bold text-center text-gray-700 mb-2">Đáp ứng thời gian (Góc \(\alpha\))</h3>
                         <canvas id="timeChart" height="150"></canvas>
-                        <p class="text-xs text-center text-gray-500 mt-2">Theo dõi Vị trí thực \(x\) tiến về \(x_d\)</p>
+                        <p class="text-xs text-center text-gray-500 mt-2">Theo dõi Góc thực \(\alpha\) tiến về góc đích \(\alpha_{ref}\)</p>
+                    </div>
+
+                    <!-- Biểu đồ Độ sâu (Depth) MỚI -->
+                    <div id="container-depth" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2 relative">
+                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1 shadow-sm border border-gray-200">
+                            <label class="inline-flex items-center cursor-pointer" title="Tự động Scale Trục">
+                                <input type="checkbox" id="scale-depth" class="form-checkbox text-indigo-600 w-3 h-3" checked>
+                                <span class="ml-1 text-[10px] font-bold text-indigo-600">Auto</span>
+                            </label>
+                        </div>
+                        <h3 class="font-bold text-center text-teal-600 mb-2">Đáp ứng Độ sâu ước lượng (Depth)</h3>
+                        <canvas id="depthChart" height="150"></canvas>
+                        <p class="text-xs text-center text-gray-500 mt-2">Theo dõi Độ sâu ước lượng tiến về độ sâu mong muốn</p>
                     </div>
                     
                     <!-- Biểu đồ Sai số -->
                     <div id="container-error" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2 relative">
-                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1">
+                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1 shadow-sm border border-gray-200">
                             <label class="inline-flex items-center cursor-pointer" title="Tự động Scale Trục">
-                                <input type="checkbox" id="scale-error" class="form-checkbox text-indigo-600 w-4 h-4" checked>
-                                <span class="ml-1 text-xs font-bold text-indigo-600">Auto</span>
+                                <input type="checkbox" id="scale-error" class="form-checkbox text-indigo-600 w-3 h-3" checked>
+                                <span class="ml-1 text-[10px] font-bold text-indigo-600">Auto</span>
                             </label>
                         </div>
                         <h3 class="font-bold text-center text-red-600 mb-2">Sai số điều khiển (Error \(e\))</h3>
                         <canvas id="errorChart" height="100"></canvas>
-                        <p class="text-xs text-center text-gray-500 mt-2">Sai số giữa trạng thái đo lường/dự đoán và vị trí đích</p>
+                        <p class="text-xs text-center text-gray-500 mt-2">Sai số giữa góc \(\alpha\) đo lường/dự đoán và góc đích \(\alpha_{ref}\)</p>
                     </div>
                     
                     <!-- Tùy chọn ẩn/hiển thị tín hiệu điều khiển & Window Time -->
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2 flex flex-wrap justify-center items-center gap-4">
                         <div class="flex items-center space-x-4">
                             <span class="font-bold text-gray-700">Hiển thị tín hiệu:</span>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="toggle-depth" checked class="form-checkbox text-teal-600 w-5 h-5">
+                                <span class="ml-2 font-medium text-teal-600">Độ sâu</span>
+                            </label>
                             <label class="inline-flex items-center cursor-pointer">
                                 <input type="checkbox" id="toggle-error" checked class="form-checkbox text-red-600 w-5 h-5">
                                 <span class="ml-2 font-medium text-red-600">Sai số \(e\)</span>
@@ -503,10 +543,10 @@
 
                     <!-- 3 Biểu đồ tín hiệu riêng biệt -->
                     <div id="container-ueq" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2 relative">
-                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1">
+                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1 shadow-sm border border-gray-200">
                             <label class="inline-flex items-center cursor-pointer" title="Tự động Scale Trục">
-                                <input type="checkbox" id="scale-ueq" class="form-checkbox text-indigo-600 w-4 h-4" checked>
-                                <span class="ml-1 text-xs font-bold text-indigo-600">Auto</span>
+                                <input type="checkbox" id="scale-ueq" class="form-checkbox text-indigo-600 w-3 h-3" checked>
+                                <span class="ml-1 text-[10px] font-bold text-indigo-600">Auto</span>
                             </label>
                         </div>
                         <h3 class="font-bold text-center text-blue-600 mb-2">Tín hiệu Tương đương (\(u_{eq}\))</h3>
@@ -514,10 +554,10 @@
                     </div>
 
                     <div id="container-usw" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2 relative">
-                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1">
+                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1 shadow-sm border border-gray-200">
                             <label class="inline-flex items-center cursor-pointer" title="Tự động Scale Trục">
-                                <input type="checkbox" id="scale-usw" class="form-checkbox text-indigo-600 w-4 h-4" checked>
-                                <span class="ml-1 text-xs font-bold text-indigo-600">Auto</span>
+                                <input type="checkbox" id="scale-usw" class="form-checkbox text-indigo-600 w-3 h-3" checked>
+                                <span class="ml-1 text-[10px] font-bold text-indigo-600">Auto</span>
                             </label>
                         </div>
                         <h3 class="font-bold text-center text-orange-600 mb-2">Tín hiệu Chuyển mạch (\(u_{sw}\))</h3>
@@ -525,10 +565,10 @@
                     </div>
 
                     <div id="container-u" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2 relative">
-                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1">
+                        <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1 shadow-sm border border-gray-200">
                             <label class="inline-flex items-center cursor-pointer" title="Tự động Scale Trục">
-                                <input type="checkbox" id="scale-u" class="form-checkbox text-indigo-600 w-4 h-4" checked>
-                                <span class="ml-1 text-xs font-bold text-indigo-600">Auto</span>
+                                <input type="checkbox" id="scale-u" class="form-checkbox text-indigo-600 w-3 h-3" checked>
+                                <span class="ml-1 text-[10px] font-bold text-indigo-600">Auto</span>
                             </label>
                         </div>
                         <h3 class="font-bold text-center text-green-600 mb-2">Tín hiệu Tổng phát ra (\(u\)) & Nhận được bị trễ (\(u_{delayed}\))</h3>
@@ -546,9 +586,13 @@
             
             // Check Web Serial API support
             if (!("serial" in navigator)) {
-                document.getElementById('serial-warning').classList.remove('hidden');
-                document.getElementById('btn-connect-serial').disabled = true;
-                document.getElementById('btn-connect-serial').classList.add('opacity-50', 'cursor-not-allowed');
+                let warningEl = document.getElementById('serial-warning');
+                let btnConnect = document.getElementById('btn-connect-serial');
+                if(warningEl) warningEl.classList.remove('hidden');
+                if(btnConnect) {
+                    btnConnect.disabled = true;
+                    btnConnect.classList.add('opacity-50', 'cursor-not-allowed');
+                }
             }
         });
 
@@ -556,23 +600,23 @@
         let surfaceType = 'linear'; // Lựa chọn: 'linear' hoặc 'pid'
         let reachingType = 'sign';  // Lựa chọn: 'sign' hoặc 'super_twisting'
 
-        let x = 0.0;    // Vị trí thực tế
-        let v = 0.0;    // Vận tốc thực tế (x_dot)
+        let x = 10.0;    // Vị trí thực tế (Góc alpha ban đầu)
+        let v = 0.0;    // Vận tốc thực tế (alpha_dot)
         let t = 0.0;    // Thời gian
         
         // Trạng thái đo lường (có thể lẫn nhiễu hoặc đến từ Serial)
-        let x_m = 0.0;
+        let x_m = 10.0;
         let v_m = 0.0;
 
         // Trạng thái điều khiển (sau khi bù trễ)
-        let x_ctrl = 0.0;
+        let x_ctrl = 10.0;
         let v_ctrl = 0.0;
 
         // Smith Predictor models
         let spEnabled = false;
-        let x_hat = 0.0; // Mô hình dự đoán không trễ
+        let x_hat = 10.0; // Mô hình dự đoán không trễ
         let v_hat = 0.0;
-        let x_bar = 0.0; // Mô hình có trễ
+        let x_bar = 10.0; // Mô hình có trễ
         let v_bar = 0.0;
 
         let int_e = 0.0; // Tích phân sai số điều khiển
@@ -596,8 +640,9 @@
         // Cấu hình Phần cứng (Web Serial)
         let hardwareMode = false;
         let sendUToSerial = false;
-        let hw_x = 0.0;
-        let hw_v = 0.0;
+        let hw_x = 10.0;     // Biến alpha đọc từ COM
+        let hw_v = 0.0;      // Đạo hàm tự tính
+        let hw_beta = 5.0;   // Biến beta đọc từ COM
         let lpf_alpha = 0.80; // Hệ số Low-pass filter
         
         let serialPort = null;
@@ -606,13 +651,93 @@
         let keepReading = false;
 
         // Thông số bộ điều khiển
-        let xd = 10.0;
+        let desire_depth = 40.0; 
+        let beta = 5.0;
+        let xd = 10.0; // alpha_ref tính toán được
+        
         let lambda = 2.0; // Cho Linear SMC
         let kp = 2.0;     // Cho PID SMC
         let ki = 0.5;
         let kd = 1.0;
         let K = 5.0;
         let K2 = 10.0;    // Hệ số cho trạng thái tích phân STA
+
+        // Alpha bounds
+        const ALPHA_MIN = 10.0;
+        const ALPHA_MAX = 40.0;
+        let alpha_prev = 10.0;
+
+        // Hàm Polynomial Tính Góc Nâng
+        function calculate_lifting_angle(d_depth, b_angle) {
+            let a_ref = 8.6602361488e+00;
+            
+            // Bậc 1
+            a_ref += (9.5793325663e-01) * d_depth;
+            a_ref += (-2.9645955714e+00) * b_angle;
+            
+            // Bậc 2
+            a_ref += (-2.1278701107e-03) * Math.pow(d_depth, 2);
+            a_ref += (1.8485712833e-03) * (d_depth * b_angle);
+            a_ref += (4.5389062468e-02) * Math.pow(b_angle, 2);
+            
+            // Bậc 3
+            a_ref += (-3.7584042157e-04) * Math.pow(d_depth, 3);
+            a_ref += (4.0421411488e-03) * (Math.pow(d_depth, 2) * b_angle);
+            a_ref += (-1.4163162584e-02) * (d_depth * Math.pow(b_angle, 2));
+            a_ref += (1.5422123092e-02) * Math.pow(b_angle, 3);
+
+            // Fallback rules
+            if (a_ref < ALPHA_MIN) {
+                a_ref = alpha_prev;
+            }
+            
+            // Clamp
+            a_ref = Math.max(ALPHA_MIN, Math.min(ALPHA_MAX, a_ref));
+            
+            // Lưu lại cho vòng kế
+            alpha_prev = a_ref;
+            return a_ref;
+        }
+
+        // Hàm Polynomial Tính Độ Sâu Ước Lượng (Depth)
+        function calculate_depth(alpha_val, beta_val) {
+            if (beta_val < 0.5) {
+                return 0.0;
+            }
+            
+            const c0 = 14.8231841565;
+            const c1 = -2.5728483250; 
+            const c2 = 2.5589109354;  
+            const c3 = 0.0431399228;  
+            const c4 = 0.1178597710;  
+            const c5 = -0.0222313485; 
+            const c6 = 0.0032458064;  
+            const c7 = -0.0068033308; 
+            const c8 = 0.0022842150;  
+            const c9 = 0.0001798013;  
+            
+            let d_val = c0 + 
+                        c1 * alpha_val + 
+                        c2 * beta_val + 
+                        c3 * Math.pow(alpha_val, 2) + 
+                        c4 * alpha_val * beta_val + 
+                        c5 * Math.pow(beta_val, 2) + 
+                        c6 * Math.pow(alpha_val, 3) + 
+                        c7 * Math.pow(alpha_val, 2) * beta_val + 
+                        c8 * alpha_val * Math.pow(beta_val, 2) + 
+                        c9 * Math.pow(beta_val, 3);
+            
+            // Giới hạn vật lý (Saturation)
+            if (d_val > 160.0) {
+                return 160.0;
+            } else if (d_val < 0.0) {
+                return 0.0;
+            }
+            return d_val;
+        }
+
+        // Khởi tạo reference ban đầu
+        xd = calculate_lifting_angle(desire_depth, beta);
 
         // Buffer lưu trữ tín hiệu trễ
         let u_buffer = [];
@@ -625,6 +750,7 @@
         const stateCtx = document.getElementById('stateChart').getContext('2d');
         const phaseCtx = document.getElementById('phaseChart').getContext('2d');
         const timeCtx = document.getElementById('timeChart').getContext('2d');
+        const depthCtx = document.getElementById('depthChart').getContext('2d'); // Thêm context biểu đồ depth
         const errorCtx = document.getElementById('errorChart').getContext('2d');
         const ueqCtx = document.getElementById('controlUeqChart').getContext('2d');
         const uswCtx = document.getElementById('controlUswChart').getContext('2d');
@@ -640,8 +766,8 @@
             data: {
                 datasets: [
                     {
-                        label: 'Quỹ đạo (x, x_dot)',
-                        data: [{x: 0, y: 0}], // ban đầu x=0, v=0
+                        label: 'Quỹ đạo (α, α_dot)',
+                        data: [{x: x, y: v}], // ban đầu x=x, v=0
                         borderColor: '#8b5cf6', // purple-500
                         backgroundColor: '#8b5cf6',
                         showLine: true,
@@ -649,7 +775,7 @@
                         borderWidth: 2
                     },
                     {
-                        label: 'Điểm đích x_d',
+                        label: 'Góc đích α_ref',
                         data: [{x: xd, y: 0}], // mục tiêu: vị trí xd, vận tốc 0
                         borderColor: '#10b981', // green-500
                         backgroundColor: '#10b981',
@@ -663,8 +789,8 @@
                 responsive: true,
                 animation: false,
                 scales: {
-                    x: { title: { display: true, text: 'Vị trí (x)' } },
-                    y: { title: { display: true, text: 'Vận tốc (x dot)' } }
+                    x: { title: { display: true, text: 'Góc (α)' } },
+                    y: { title: { display: true, text: 'Vận tốc góc (α dot)' } }
                 }
             }
         });
@@ -676,7 +802,7 @@
                 datasets: [
                     {
                         label: 'Quỹ đạo trạng thái điều khiển',
-                        data: [{x: -xd, y: 0}], // ban đầu e = 0 - xd
+                        data: [{x: x - xd, y: v}], // ban đầu e = x - xd
                         borderColor: '#ef4444', // red-500
                         backgroundColor: '#ef4444',
                         showLine: true,
@@ -704,14 +830,14 @@
             }
         });
 
-        // Khởi tạo đồ thị Thời gian
+        // Khởi tạo đồ thị Thời gian (Góc alpha)
         const timeChart = new Chart(timeCtx, {
             type: 'line',
             data: {
                 labels: [0],
                 datasets: [
                     {
-                        label: 'Vị trí thực x(t)',
+                        label: 'Góc thực α(t)',
                         data: [x],
                         borderColor: '#10b981', // green-500
                         tension: 0.1,
@@ -719,7 +845,7 @@
                         borderWidth: 2
                     },
                     {
-                        label: 'Vị trí đặt x_d',
+                        label: 'Góc đặt α_ref',
                         data: [xd],
                         borderColor: '#6b7280', // gray-500
                         borderDash: [2, 2],
@@ -759,13 +885,48 @@
             plugins: { legend: { display: true } }
         };
 
+        // Khởi tạo đồ thị Độ sâu (Depth) MỚI
+        const depthChart = new Chart(depthCtx, {
+            type: 'line',
+            data: {
+                labels: [0],
+                datasets: [
+                    {
+                        label: 'Độ sâu ước lượng (mm)',
+                        data: [calculate_depth(x, beta)],
+                        borderColor: '#0d9488', // teal-600
+                        tension: 0.1,
+                        pointRadius: 0,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Độ sâu đặt (Depth_d)',
+                        data: [desire_depth],
+                        borderColor: '#6b7280', // gray-500
+                        borderDash: [2, 2],
+                        pointRadius: 0,
+                        borderWidth: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                animation: false,
+                scales: {
+                    x: { title: { display: true, text: 'Thời gian t (s)' } },
+                    y: { title: { display: true, text: 'Độ sâu (mm)' } }
+                },
+                plugins: { legend: { display: true } }
+            }
+        });
+
         // Khởi tạo đồ thị Sai số
         const errorChart = new Chart(errorCtx, {
             type: 'line',
             data: {
                 labels: [0],
                 datasets: [{
-                    label: 'Sai số e(t)', data: [-xd], borderColor: '#ef4444', tension: 0.1, pointRadius: 0, borderWidth: 2
+                    label: 'Sai số e(t)', data: [x - xd], borderColor: '#ef4444', tension: 0.1, pointRadius: 0, borderWidth: 2
                 }]
             },
             options: controlChartOptions
@@ -816,13 +977,15 @@
         function updateChartScales() {
             // Định nghĩa các giới hạn tĩnh (Static Ranges) khi tắt Auto-scale
             const staticScales = {
-                stateX: [-5, 25], stateY: [-15, 15],
+                stateX: [0, 50], stateY: [-15, 15],
                 phaseX: [-30, 30], phaseY: [-20, 20],
-                timeY: [-5, 25],
+                timeY: [0, 50],
+                depthY: [0, 160], // Trục tĩnh cho đồ thị độ sâu mới
                 controlY: [-5000, 5000] // Vì b rất nhỏ, u có thể rất lớn
             };
 
             const applyScale = (chart, axis, min, max, auto) => {
+                if(!chart || !chart.options) return;
                 if (auto) {
                     delete chart.options.scales[axis].min;
                     delete chart.options.scales[axis].max;
@@ -832,44 +995,55 @@
                 }
             };
 
+            // Lấy an toàn trạng thái checked để phòng lỗi null reference
+            const isChecked = (id) => {
+                let el = document.getElementById(id);
+                return el ? el.checked : true;
+            };
+
             // State Chart
-            let autoState = document.getElementById('scale-state').checked;
+            let autoState = isChecked('scale-state');
             applyScale(stateChart, 'x', staticScales.stateX[0], staticScales.stateX[1], autoState);
             applyScale(stateChart, 'y', staticScales.stateY[0], staticScales.stateY[1], autoState);
             stateChart.update();
 
             // Phase Chart
-            let autoPhase2D = document.getElementById('scale-phase2d').checked;
+            let autoPhase2D = isChecked('scale-phase2d');
             applyScale(phaseChart, 'x', staticScales.phaseX[0], staticScales.phaseX[1], autoPhase2D);
             applyScale(phaseChart, 'y', staticScales.phaseY[0], staticScales.phaseY[1], autoPhase2D);
             phaseChart.update();
 
             // Time Chart
-            let autoTime = document.getElementById('scale-time').checked;
+            let autoTime = isChecked('scale-time');
             applyScale(timeChart, 'y', staticScales.timeY[0], staticScales.timeY[1], autoTime);
             timeChart.update();
 
-            // Error Chart (Sử dụng cùng trục x với quỹ đạo sai số)
-            let autoError = document.getElementById('scale-error').checked;
+            // Depth Chart
+            let autoDepth = isChecked('scale-depth');
+            applyScale(depthChart, 'y', staticScales.depthY[0], staticScales.depthY[1], autoDepth);
+            depthChart.update();
+
+            // Error Chart
+            let autoError = isChecked('scale-error');
             applyScale(errorChart, 'y', staticScales.phaseX[0], staticScales.phaseX[1], autoError);
             errorChart.update();
 
             // Control Charts
-            let autoUeq = document.getElementById('scale-ueq').checked;
+            let autoUeq = isChecked('scale-ueq');
             applyScale(controlUeqChart, 'y', staticScales.controlY[0], staticScales.controlY[1], autoUeq);
             controlUeqChart.update();
             
-            let autoUsw = document.getElementById('scale-usw').checked;
+            let autoUsw = isChecked('scale-usw');
             applyScale(controlUswChart, 'y', staticScales.controlY[0], staticScales.controlY[1], autoUsw);
             controlUswChart.update();
             
-            let autoU = document.getElementById('scale-u').checked;
+            let autoU = isChecked('scale-u');
             applyScale(controlUChart, 'y', staticScales.controlY[0], staticScales.controlY[1], autoU);
             controlUChart.update();
 
             // Plotly 3D
             if (isPlotlyInitialized) {
-                let autoPhase3D = document.getElementById('scale-phase3d').checked;
+                let autoPhase3D = isChecked('scale-phase3d');
                 let updateLayout = {};
                 if (autoPhase3D) {
                     updateLayout = {
@@ -896,7 +1070,7 @@
             let buffer = '';
             let last_time = performance.now();
             
-            while (serialPort.readable && keepReading) {
+            while (serialPort && serialPort.readable && keepReading) {
                 try {
                     const { value, done } = await serialReader.read();
                     if (done) break;
@@ -906,24 +1080,31 @@
                     buffer = lines.pop(); // Giữ lại phần chưa hoàn chỉnh
                     
                     for (let line of lines) {
-                        let parsedX = parseFloat(line.trim());
-                        if (!isNaN(parsedX)) {
-                            // Tính thời gian thực tế giữa 2 lần nhận để tính đạo hàm chính xác
-                            let now = performance.now();
-                            let delta_t = (now - last_time) / 1000.0; // đổi sang giây
-                            
-                            if (delta_t > 0.001) { // Tránh chia cho 0 nếu dữ liệu đến quá nhanh
-                                let raw_v = (parsedX - hw_x) / delta_t;
-                                // Dùng bộ lọc thông thấp (Low-pass filter) để giảm nhiễu đạo hàm
-                                hw_v = lpf_alpha * hw_v + (1.0 - lpf_alpha) * raw_v;
-                            } else if (delta_t <= 0) {
-                                // Fallback dùng dt mô phỏng
-                                let raw_v = (parsedX - hw_x) / dt;
-                                hw_v = lpf_alpha * hw_v + (1.0 - lpf_alpha) * raw_v;
+                        let parts = line.trim().split(',');
+                        if (parts.length >= 1) {
+                            let parsedAlpha = parseFloat(parts[0]);
+                            if (!isNaN(parsedAlpha)) {
+                                // Tính thời gian thực tế để tính đạo hàm chính xác
+                                let now = performance.now();
+                                let delta_t = (now - last_time) / 1000.0; // đổi sang giây
+                                
+                                if (delta_t > 0.001) { 
+                                    let raw_v = (parsedAlpha - hw_x) / delta_t;
+                                    hw_v = lpf_alpha * hw_v + (1.0 - lpf_alpha) * raw_v;
+                                } else if (delta_t <= 0) {
+                                    let raw_v = (parsedAlpha - hw_x) / dt;
+                                    hw_v = lpf_alpha * hw_v + (1.0 - lpf_alpha) * raw_v;
+                                }
+                                
+                                hw_x = parsedAlpha;
+                                last_time = now;
                             }
-                            
-                            hw_x = parsedX;
-                            last_time = now;
+                        }
+                        if (parts.length >= 2) {
+                            let parsedBeta = parseFloat(parts[1]);
+                            if (!isNaN(parsedBeta)) {
+                                hw_beta = parsedBeta;
+                            }
                         }
                     }
                 } catch (error) {
@@ -943,62 +1124,69 @@
             }
         }
 
-        document.getElementById('btn-connect-serial').addEventListener('click', async () => {
-            try {
-                serialPort = await navigator.serial.requestPort();
-                await serialPort.open({ baudRate: 115200 });
-                
-                const textDecoder = new TextDecoderStream();
-                const readableStreamClosed = serialPort.readable.pipeTo(textDecoder.writable);
-                serialReader = textDecoder.readable.getReader();
+        let btnConnect = document.getElementById('btn-connect-serial');
+        if(btnConnect) {
+            btnConnect.addEventListener('click', async () => {
+                try {
+                    serialPort = await navigator.serial.requestPort();
+                    await serialPort.open({ baudRate: 115200 });
+                    
+                    const textDecoder = new TextDecoderStream();
+                    const readableStreamClosed = serialPort.readable.pipeTo(textDecoder.writable);
+                    serialReader = textDecoder.readable.getReader();
 
-                const textEncoder = new TextEncoderStream();
-                const writableStreamClosed = textEncoder.readable.pipeTo(serialPort.writable);
-                serialWriter = textEncoder.writable.getWriter();
+                    const textEncoder = new TextEncoderStream();
+                    const writableStreamClosed = textEncoder.readable.pipeTo(serialPort.writable);
+                    serialWriter = textEncoder.writable.getWriter();
 
-                document.getElementById('serial-status').textContent = 'Đã kết nối';
-                document.getElementById('serial-status').className = 'px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded';
-                document.getElementById('btn-connect-serial').classList.add('hidden');
-                document.getElementById('btn-disconnect-serial').classList.remove('hidden');
-                document.getElementById('toggle-hardware-mode').disabled = false;
+                    document.getElementById('serial-status').textContent = 'Đã kết nối';
+                    document.getElementById('serial-status').className = 'px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded';
+                    document.getElementById('btn-connect-serial').classList.add('hidden');
+                    document.getElementById('btn-disconnect-serial').classList.remove('hidden');
+                    
+                    let hmToggle = document.getElementById('toggle-hardware-mode');
+                    if(hmToggle) hmToggle.disabled = false;
 
-                keepReading = true;
-                readSerialLoop(); // Bắt đầu vòng lặp đọc background
-            } catch (err) {
-                console.error('Lỗi kết nối Serial:', err);
-                alert('Không thể kết nối cổng COM: ' + err.message);
-            }
-        });
+                    keepReading = true;
+                    readSerialLoop(); // Bắt đầu vòng lặp đọc background
+                } catch (err) {
+                    console.error('Lỗi kết nối Serial:', err);
+                    alert('Không thể kết nối cổng COM: ' + err.message);
+                }
+            });
+        }
 
-        document.getElementById('btn-disconnect-serial').addEventListener('click', async () => {
-            try {
-                keepReading = false;
-                if (serialReader) { await serialReader.cancel(); serialReader = null; }
-                if (serialWriter) { await serialWriter.close(); serialWriter = null; }
-                if (serialPort) { await serialPort.close(); serialPort = null; }
-                
-                // Cập nhật UI
-                document.getElementById('serial-status').textContent = 'Chưa kết nối';
-                document.getElementById('serial-status').className = 'px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded';
-                document.getElementById('btn-connect-serial').classList.remove('hidden');
-                document.getElementById('btn-disconnect-serial').classList.add('hidden');
-                
-                let hwToggle = document.getElementById('toggle-hardware-mode');
-                hwToggle.checked = false;
-                hwToggle.disabled = true;
-                
-                // Kích hoạt sự kiện change để tắt chế độ Hardware Mode
-                const event = new Event('change');
-                hwToggle.dispatchEvent(event);
+        let btnDisconnect = document.getElementById('btn-disconnect-serial');
+        if(btnDisconnect) {
+            btnDisconnect.addEventListener('click', async () => {
+                try {
+                    keepReading = false;
+                    if (serialReader) { await serialReader.cancel(); serialReader = null; }
+                    if (serialWriter) { await serialWriter.close(); serialWriter = null; }
+                    if (serialPort) { await serialPort.close(); serialPort = null; }
+                    
+                    // Cập nhật UI
+                    document.getElementById('serial-status').textContent = 'Chưa kết nối';
+                    document.getElementById('serial-status').className = 'px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded';
+                    document.getElementById('btn-connect-serial').classList.remove('hidden');
+                    document.getElementById('btn-disconnect-serial').classList.add('hidden');
+                    
+                    let hwToggle = document.getElementById('toggle-hardware-mode');
+                    if(hwToggle) {
+                        hwToggle.checked = false;
+                        hwToggle.disabled = true;
+                        const event = new Event('change');
+                        hwToggle.dispatchEvent(event);
+                    }
 
-            } catch (err) {
-                console.error('Lỗi khi đóng Serial:', err);
-            }
-        });
+                } catch (err) {
+                    console.error('Lỗi khi đóng Serial:', err);
+                }
+            });
+        }
 
         // --- HÀM CẬP NHẬT ĐƯỜNG MẶT TRƯỢT S=0 ---
         function updateSlidingSurfaceLine() {
-            // Mở rộng giới hạn vẽ để bao phủ sai số lớn (tới 20)
             const e_min = -30;
             const e_max = 30;
             
@@ -1010,6 +1198,19 @@
                 ];
             }
             phaseChart.update();
+        }
+
+        // --- HÀM CẬP NHẬT GÓC REFERENCE VÀ GIAO DIỆN ---
+        function updateReferenceAndCharts() {
+            xd = calculate_lifting_angle(desire_depth, beta);
+            let valAlphaRef = document.getElementById('val-alpha-ref');
+            if(valAlphaRef) valAlphaRef.textContent = xd.toFixed(3);
+            
+            // Cập nhật điểm đích trên biểu đồ trạng thái
+            stateChart.data.datasets[1].data = [{x: xd, y: 0}];
+            stateChart.update();
+            
+            if(!isRunning) calculateAndRenderMath();
         }
 
         // --- HÀM KHỞI TẠO VÀ CẬP NHẬT ĐỒ THỊ 3D (PLOTLY) ---
@@ -1043,7 +1244,8 @@
                 name: 'Quỹ đạo'
             };
 
-            let isAuto = document.getElementById('scale-phase3d').checked;
+            let scalePhase3dEl = document.getElementById('scale-phase3d');
+            let isAuto = scalePhase3dEl ? scalePhase3dEl.checked : true;
 
             let layout = {
                 margin: { l: 0, r: 0, b: 0, t: 10 },
@@ -1082,6 +1284,14 @@
         // --- HÀM TÍNH TOÁN & CẬP NHẬT GIAO DIỆN TỪNG BƯỚC ---
         function calculateAndRenderMath() {
             
+            // Cập nhật logic xd phòng trường hợp thay đổi thông qua biến
+            xd = calculate_lifting_angle(desire_depth, beta);
+
+            // Cập nhật hiển thị ước lượng độ sâu dựa trên trạng thái đo lường
+            let current_est_depth = calculate_depth(x_m, beta);
+            let calcDepthEl = document.getElementById('calc-depth');
+            if (calcDepthEl) calcDepthEl.textContent = current_est_depth.toFixed(3);
+
             // Nếu bật Smith Predictor, tính trạng thái điều khiển từ mô hình bù trễ
             if (spEnabled) {
                 x_ctrl = x_hat + (x_m - x_bar);
@@ -1128,53 +1338,88 @@
             const f = (val) => val.toFixed(3); // format 3 chữ số
             const fb = (val) => Math.abs(val) < 0.001 && val !== 0 ? val.toExponential(2) : val.toFixed(3); // format cho các số cực nhỏ như b_sys
             
-            document.getElementById('t-val').textContent = f(t);
+            let tValEl = document.getElementById('t-val');
+            if(tValEl) tValEl.textContent = f(t);
             
-            document.getElementById('calc-xm').textContent = f(x_m);
-            document.getElementById('calc-vm').textContent = f(v_m);
+            let calcXmEl = document.getElementById('calc-xm');
+            if(calcXmEl) calcXmEl.textContent = f(x_m);
+            
+            let calcVmEl = document.getElementById('calc-vm');
+            if(calcVmEl) calcVmEl.textContent = f(v_m);
 
             if (spEnabled) {
-                document.getElementById('row-sp').classList.remove('hidden');
-                document.getElementById('calc-xctrl-sp').textContent = `${f(x_hat)} + ${f(x_m)} - ${f(x_bar)} = ${f(x_ctrl)}`;
+                let rowSpEl = document.getElementById('row-sp');
+                if(rowSpEl) rowSpEl.classList.remove('hidden');
+                
+                let calcXctrlSpEl = document.getElementById('calc-xctrl-sp');
+                if(calcXctrlSpEl) calcXctrlSpEl.textContent = `${f(x_hat)} + ${f(x_m)} - ${f(x_bar)} = ${f(x_ctrl)}`;
             } else {
-                document.getElementById('row-sp').classList.add('hidden');
+                let rowSpEl = document.getElementById('row-sp');
+                if(rowSpEl) rowSpEl.classList.add('hidden');
             }
 
-            document.getElementById('calc-xctrl').textContent = f(x_ctrl);
-            document.getElementById('calc-vctrl').textContent = f(v_ctrl);
+            let calcXctrlEl = document.getElementById('calc-xctrl');
+            if(calcXctrlEl) calcXctrlEl.textContent = f(x_ctrl);
             
-            document.getElementById('eq-e').textContent = `${f(x_ctrl)} - ${f(xd)}`;
-            document.getElementById('calc-e').textContent = f(e_ctrl);
+            let calcVctrlEl = document.getElementById('calc-vctrl');
+            if(calcVctrlEl) calcVctrlEl.textContent = f(v_ctrl);
             
-            document.getElementById('calc-inte').textContent = f(int_e);
-            document.getElementById('calc-vsta').textContent = f(v_sta);
+            let eqEEl = document.getElementById('eq-e');
+            if(eqEEl) eqEEl.textContent = `${f(x_ctrl)} - ${f(xd)}`;
+            
+            let calcEEl = document.getElementById('calc-e');
+            if(calcEEl) calcEEl.textContent = f(e_ctrl);
+            
+            let calcInteEl = document.getElementById('calc-inte');
+            if(calcInteEl) calcInteEl.textContent = f(int_e);
+            
+            let calcVstaEl = document.getElementById('calc-vsta');
+            if(calcVstaEl) calcVstaEl.textContent = f(v_sta);
             
             if (surfaceType === 'linear') {
-                document.getElementById('eq-s').textContent = `${f(de_ctrl)} + ${f(lambda)}(${f(e_ctrl)})`;
-                document.getElementById('eq-ueq').textContent = `( ${f(a1)}(${f(v_ctrl)}) + ${f(a2)}(${f(x_ctrl)}) - ${f(lambda)}(${f(v_ctrl)}) ) / ${fb(b_sys)}`;
+                let eqSEl = document.getElementById('eq-s');
+                if(eqSEl) eqSEl.textContent = `${f(de_ctrl)} + ${f(lambda)}(${f(e_ctrl)})`;
+                
+                let eqUeqEl = document.getElementById('eq-ueq');
+                if(eqUeqEl) eqUeqEl.textContent = `( ${f(a1)}(${f(v_ctrl)}) + ${f(a2)}(${f(x_ctrl)}) - ${f(lambda)}(${f(v_ctrl)}) ) / ${fb(b_sys)}`;
                 
                 if (reachingType === 'sign') {
-                    document.getElementById('eq-usw').textContent = `-${f(K)} × sgn(${f(s)}) / ${fb(b_sys)}`;
+                    let eqUswEl = document.getElementById('eq-usw');
+                    if(eqUswEl) eqUswEl.textContent = `-${f(K)} × sgn(${f(s)}) / ${fb(b_sys)}`;
                 } else {
-                    document.getElementById('eq-usw').textContent = `(-${f(K)}√|${f(s)}|sgn(${f(s)}) + ${f(v_sta)}) / ${fb(b_sys)}`;
+                    let eqUswEl = document.getElementById('eq-usw');
+                    if(eqUswEl) eqUswEl.textContent = `(-${f(K)}√|${f(s)}|sgn(${f(s)}) + ${f(v_sta)}) / ${fb(b_sys)}`;
                 }
             } else {
-                document.getElementById('eq-s').textContent = `${f(kp)}(${f(e_ctrl)}) + ${f(ki)}(${f(int_e)}) + ${f(kd)}(${f(de_ctrl)})`;
-                document.getElementById('eq-ueq').textContent = `( ${f(a1)}(${f(v_ctrl)}) + ${f(a2)}(${f(x_ctrl)}) - ${f(kp/kd)}(${f(v_ctrl)}) - ${f(ki/kd)}(${f(e_ctrl)}) ) / ${fb(b_sys)}`;
+                let eqSEl = document.getElementById('eq-s');
+                if(eqSEl) eqSEl.textContent = `${f(kp)}(${f(e_ctrl)}) + ${f(ki)}(${f(int_e)}) + ${f(kd)}(${f(de_ctrl)})`;
+                
+                let eqUeqEl = document.getElementById('eq-ueq');
+                if(eqUeqEl) eqUeqEl.textContent = `( ${f(a1)}(${f(v_ctrl)}) + ${f(a2)}(${f(x_ctrl)}) - ${f(kp/kd)}(${f(v_ctrl)}) - ${f(ki/kd)}(${f(e_ctrl)}) ) / ${fb(b_sys)}`;
                 
                 if (reachingType === 'sign') {
-                    document.getElementById('eq-usw').textContent = `-${f(K)} × sgn(${f(s)}) / (${fb(b_sys)} × ${f(kd)})`;
+                    let eqUswEl = document.getElementById('eq-usw');
+                    if(eqUswEl) eqUswEl.textContent = `-${f(K)} × sgn(${f(s)}) / (${fb(b_sys)} × ${f(kd)})`;
                 } else {
-                    document.getElementById('eq-usw').textContent = `(-${f(K)}√|${f(s)}|sgn(${f(s)}) + ${f(v_sta)}) / (${fb(b_sys)} × ${f(kd)})`;
+                    let eqUswEl = document.getElementById('eq-usw');
+                    if(eqUswEl) eqUswEl.textContent = `(-${f(K)}√|${f(s)}|sgn(${f(s)}) + ${f(v_sta)}) / (${fb(b_sys)} × ${f(kd)})`;
                 }
             }
             
-            document.getElementById('calc-s').textContent = f(s);
-            document.getElementById('calc-ueq').textContent = f(u_eq);
-            document.getElementById('calc-usw').textContent = f(u_sw);
+            let calcS = document.getElementById('calc-s');
+            if(calcS) calcS.textContent = f(s);
             
-            document.getElementById('eq-u').textContent = `${f(u_eq)} + ${f(u_sw)}`;
-            document.getElementById('calc-u').textContent = f(u);
+            let calcUeq = document.getElementById('calc-ueq');
+            if(calcUeq) calcUeq.textContent = f(u_eq);
+            
+            let calcUsw = document.getElementById('calc-usw');
+            if(calcUsw) calcUsw.textContent = f(u_sw);
+            
+            let eqU = document.getElementById('eq-u');
+            if(eqU) eqU.textContent = `${f(u_eq)} + ${f(u_sw)}`;
+            
+            let calcU = document.getElementById('calc-u');
+            if(calcU) calcU.textContent = f(u);
 
             return { u, u_eq, u_sw, s, sgn_s, e_ctrl, de_ctrl };
         }
@@ -1187,7 +1432,20 @@
                 // Nhận giá trị thực từ Phần cứng (đã cập nhật qua readSerialLoop)
                 x_m = hw_x;
                 v_m = hw_v;
-                // Giả định trạng thái THỰC x/v cho mục đích vẽ đồ thị là giá trị đo được
+                beta = hw_beta; // Đồng bộ beta từ phần cứng
+                
+                // Đồng bộ hiển thị beta
+                let betaInputEl = document.getElementById('input-beta');
+                if(betaInputEl) betaInputEl.value = beta;
+                let valBetaEl = document.getElementById('val-beta');
+                if(valBetaEl) valBetaEl.textContent = beta.toFixed(3);
+                
+                // Cập nhật giá trị reference đích mới
+                xd = calculate_lifting_angle(desire_depth, beta);
+                let valAlphaRef = document.getElementById('val-alpha-ref');
+                if(valAlphaRef) valAlphaRef.textContent = xd.toFixed(3);
+
+                // Giả định trạng thái THỰC cho mục đích vẽ đồ thị là giá trị đo được (vì không có dữ liệu thực siêu việt)
                 x = x_m;
                 v = v_m;
             } else {
@@ -1200,6 +1458,9 @@
                     v_m = v;
                 }
             }
+
+            // Tính toán độ sâu thực tế (ước lượng từ x đo được hoặc thực)
+            let current_est_depth = calculate_depth(x, beta);
 
             // 2. Lấy tín hiệu điều khiển u từ hàm tính toán
             let ctrl = calculateAndRenderMath();
@@ -1222,7 +1483,8 @@
             if(u_buffer.length > 500) u_buffer.shift(); // Giới hạn buffer an toàn
             
             let u_delayed = getDelayedU();
-            document.getElementById('calc-udelayed').textContent = u_delayed.toFixed(3);
+            let udelEl = document.getElementById('calc-udelayed');
+            if(udelEl) udelEl.textContent = u_delayed.toFixed(3);
 
             // 4. Cập nhật các Mô hình danh định của Smith Predictor
             if (spEnabled) {
@@ -1261,6 +1523,9 @@
             // Sử dụng vòng lặp while để xử lý trường hợp người dùng giảm thời gian hiển thị đột ngột
             while(stateData.length > maxPoints) stateData.shift();
             
+            // Cập nhật dynamic target xd line
+            stateChart.data.datasets[1].data = [{x: xd, y: 0}];
+
             if (surfaceType === 'linear') {
                 let phaseData = phaseChart.data.datasets[0].data;
                 phaseData.push({x: ctrl.e_ctrl, y: ctrl.de_ctrl});
@@ -1280,6 +1545,10 @@
             let timeDataX = timeChart.data.datasets[0].data;
             let timeDataXd = timeChart.data.datasets[1].data;
             
+            let depthLabels = depthChart.data.labels;
+            let depthData = depthChart.data.datasets[0].data;
+            let depthDataRef = depthChart.data.datasets[1].data;
+
             let errorLabels = errorChart.data.labels;
             let errorData = errorChart.data.datasets[0].data;
             
@@ -1299,6 +1568,10 @@
             timeDataX.push(x);
             timeDataXd.push(xd);
             
+            depthLabels.push(t_str);
+            depthData.push(current_est_depth);
+            depthDataRef.push(desire_depth);
+
             errorLabels.push(t_str);
             errorData.push(ctrl.e_ctrl);
             
@@ -1317,6 +1590,10 @@
                 timeDataX.shift();
                 timeDataXd.shift();
                 
+                depthLabels.shift();
+                depthData.shift();
+                depthDataRef.shift();
+
                 errorLabels.shift();
                 errorData.shift();
                 
@@ -1334,6 +1611,7 @@
             // Cập nhật lên canvas
             stateChart.update();
             timeChart.update();
+            depthChart.update();
             errorChart.update();
             controlUeqChart.update();
             controlUswChart.update();
@@ -1355,26 +1633,50 @@
         function updateVisibility() {
             // Cập nhật Mặt trượt (Linear / PID)
             if (surfaceType === 'linear') {
-                document.getElementById('params-linear').classList.remove('hidden');
-                document.getElementById('params-pid').classList.add('hidden');
-                document.getElementById('theory-linear').classList.remove('hidden');
-                document.getElementById('theory-pid').classList.add('hidden');
-                document.getElementById('row-inte').classList.add('hidden');
+                let pLin = document.getElementById('params-linear');
+                if(pLin) pLin.classList.remove('hidden');
                 
-                document.getElementById('phase2d-container').classList.remove('hidden');
-                document.getElementById('phase3d-container').classList.add('hidden');
+                let pPid = document.getElementById('params-pid');
+                if(pPid) pPid.classList.add('hidden');
+                
+                let tLin = document.getElementById('theory-linear');
+                if(tLin) tLin.classList.remove('hidden');
+                
+                let tPid = document.getElementById('theory-pid');
+                if(tPid) tPid.classList.add('hidden');
+                
+                let rInte = document.getElementById('row-inte');
+                if(rInte) rInte.classList.add('hidden');
+                
+                let p2d = document.getElementById('phase2d-container');
+                if(p2d) p2d.classList.remove('hidden');
+                
+                let p3d = document.getElementById('phase3d-container');
+                if(p3d) p3d.classList.add('hidden');
                 
                 document.querySelectorAll('.label-linear').forEach(el => el.classList.remove('hidden'));
                 document.querySelectorAll('.label-pid').forEach(el => el.classList.add('hidden'));
             } else {
-                document.getElementById('params-linear').classList.add('hidden');
-                document.getElementById('params-pid').classList.remove('hidden');
-                document.getElementById('theory-linear').classList.add('hidden');
-                document.getElementById('theory-pid').classList.remove('hidden');
-                document.getElementById('row-inte').classList.remove('hidden');
+                let pLin = document.getElementById('params-linear');
+                if(pLin) pLin.classList.add('hidden');
                 
-                document.getElementById('phase2d-container').classList.add('hidden');
-                document.getElementById('phase3d-container').classList.remove('hidden');
+                let pPid = document.getElementById('params-pid');
+                if(pPid) pPid.classList.remove('hidden');
+                
+                let tLin = document.getElementById('theory-linear');
+                if(tLin) tLin.classList.add('hidden');
+                
+                let tPid = document.getElementById('theory-pid');
+                if(tPid) tPid.classList.remove('hidden');
+                
+                let rInte = document.getElementById('row-inte');
+                if(rInte) rInte.classList.remove('hidden');
+                
+                let p2d = document.getElementById('phase2d-container');
+                if(p2d) p2d.classList.add('hidden');
+                
+                let p3d = document.getElementById('phase3d-container');
+                if(p3d) p3d.classList.remove('hidden');
                 
                 // Khởi tạo Plotly nếu chưa có
                 if (!isPlotlyInitialized) {
@@ -1391,110 +1693,187 @@
             if (reachingType === 'sign') {
                 document.querySelectorAll('.law-sign').forEach(el => el.classList.remove('hidden'));
                 document.querySelectorAll('.law-sta').forEach(el => el.classList.add('hidden'));
-                document.getElementById('params-sta').classList.add('hidden');
-                document.getElementById('row-vsta').classList.add('hidden');
+                let pSta = document.getElementById('params-sta');
+                if(pSta) pSta.classList.add('hidden');
+                let rVsta = document.getElementById('row-vsta');
+                if(rVsta) rVsta.classList.add('hidden');
             } else {
                 document.querySelectorAll('.law-sign').forEach(el => el.classList.add('hidden'));
                 document.querySelectorAll('.law-sta').forEach(el => el.classList.remove('hidden'));
-                document.getElementById('params-sta').classList.remove('hidden');
-                document.getElementById('row-vsta').classList.remove('hidden');
+                let pSta = document.getElementById('params-sta');
+                if(pSta) pSta.classList.remove('hidden');
+                let rVsta = document.getElementById('row-vsta');
+                if(rVsta) rVsta.classList.remove('hidden');
             }
 
             // Cập nhật cụ thể dòng hiển thị U_sw
             document.querySelectorAll('.label-usw').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`label-usw-${surfaceType}-${reachingType}`).classList.remove('hidden');
+            let activeUsw = document.getElementById(`label-usw-${surfaceType}-${reachingType}`);
+            if(activeUsw) activeUsw.classList.remove('hidden');
         }
 
         // --- SỰ KIỆN GIAO DIỆN ---
         
         // Lắng nghe thay đổi phần cứng
-        document.getElementById('toggle-hardware-mode').addEventListener('change', (e) => {
-            hardwareMode = e.target.checked;
-            if(hardwareMode) {
-                document.getElementById('hardware-badge').classList.remove('hidden');
-                document.getElementById('calc-status-bottom').textContent = `Dữ liệu đo lường trực tiếp từ phần cứng COM`;
+        let hwToggle = document.getElementById('toggle-hardware-mode');
+        if(hwToggle) {
+            hwToggle.addEventListener('change', (e) => {
+                hardwareMode = e.target.checked;
                 
-                // Hiển thị LPF, ẩn Nhiễu
-                document.getElementById('sim-noise-config').classList.add('hidden');
-                document.getElementById('hw-filter-config').classList.remove('hidden');
-                document.getElementById('sensor-config-box').classList.replace('bg-yellow-50', 'bg-indigo-50');
-                document.getElementById('sensor-config-box').classList.replace('border-yellow-200', 'border-indigo-200');
+                // Cập nhật ô nhập beta tùy theo hardware (nếu bật HM thì disable)
+                let betaInputEl = document.getElementById('input-beta');
+                if(betaInputEl) betaInputEl.disabled = hardwareMode;
 
-                // Ẩn bộ điều khiển mô phỏng, hiện tùy chọn gửi u
-                document.getElementById('sim-controls').classList.add('hidden');
-                document.getElementById('label-send-u').classList.remove('hidden');
+                if(hardwareMode) {
+                    let hwBadge = document.getElementById('hardware-badge');
+                    if(hwBadge) hwBadge.classList.remove('hidden');
+                    
+                    let calcStatus = document.getElementById('calc-status-bottom');
+                    if(calcStatus) calcStatus.textContent = `Dữ liệu đo lường trực tiếp từ phần cứng COM`;
+                    
+                    // Hiển thị LPF, ẩn Nhiễu
+                    let simConfig = document.getElementById('sim-noise-config');
+                    if(simConfig) simConfig.classList.add('hidden');
+                    let hwConfig = document.getElementById('hw-filter-config');
+                    if(hwConfig) hwConfig.classList.remove('hidden');
+                    
+                    let snsBox = document.getElementById('sensor-config-box');
+                    if(snsBox) {
+                        snsBox.classList.replace('bg-yellow-50', 'bg-indigo-50');
+                        snsBox.classList.replace('border-yellow-200', 'border-indigo-200');
+                    }
 
-                // Tự động chạy cập nhật giao diện
-                if (!isRunning) document.getElementById('btn-play').click();
-            } else {
-                document.getElementById('hardware-badge').classList.add('hidden');
-                document.getElementById('calc-status-bottom').innerHTML = `\\(\\ddot{x} = -a_1\\dot{x} - a_2 x + b \\cdot u_{delayed}\\)`;
-                renderMathInElement(document.getElementById('calc-status-bottom'));
-                
-                // Hiển thị Nhiễu, ẩn LPF
-                document.getElementById('sim-noise-config').classList.remove('hidden');
-                document.getElementById('hw-filter-config').classList.add('hidden');
-                document.getElementById('sensor-config-box').classList.replace('bg-indigo-50', 'bg-yellow-50');
-                document.getElementById('sensor-config-box').classList.replace('border-indigo-200', 'border-yellow-200');
+                    // Ẩn bộ điều khiển mô phỏng, hiện tùy chọn gửi u
+                    let simCtrl = document.getElementById('sim-controls');
+                    if(simCtrl) simCtrl.classList.add('hidden');
+                    let lblSendU = document.getElementById('label-send-u');
+                    if(lblSendU) lblSendU.classList.remove('hidden');
 
-                // Hiện lại bộ điều khiển mô phỏng, ẩn tùy chọn gửi u
-                document.getElementById('sim-controls').classList.remove('hidden');
-                document.getElementById('label-send-u').classList.add('hidden');
+                    // Tự động chạy cập nhật giao diện
+                    let btnPlay = document.getElementById('btn-play');
+                    if (!isRunning && btnPlay) btnPlay.click();
+                } else {
+                    let hwBadge = document.getElementById('hardware-badge');
+                    if(hwBadge) hwBadge.classList.add('hidden');
+                    
+                    let calcStatus = document.getElementById('calc-status-bottom');
+                    if(calcStatus) {
+                        calcStatus.innerHTML = `\\(\\ddot{\\alpha} = -a_1\\dot{\\alpha} - a_2 \\alpha + b \\cdot u_{delayed}\\)`;
+                        renderMathInElement(calcStatus);
+                    }
+                    
+                    // Hiển thị Nhiễu, ẩn LPF
+                    let simConfig = document.getElementById('sim-noise-config');
+                    if(simConfig) simConfig.classList.remove('hidden');
+                    let hwConfig = document.getElementById('hw-filter-config');
+                    if(hwConfig) hwConfig.classList.add('hidden');
+                    
+                    let snsBox = document.getElementById('sensor-config-box');
+                    if(snsBox) {
+                        snsBox.classList.replace('bg-indigo-50', 'bg-yellow-50');
+                        snsBox.classList.replace('border-indigo-200', 'border-yellow-200');
+                    }
 
-                // Tự động dừng vòng lặp
-                if (isRunning) document.getElementById('btn-play').click();
+                    // Hiện lại bộ điều khiển mô phỏng, ẩn tùy chọn gửi u
+                    let simCtrl = document.getElementById('sim-controls');
+                    if(simCtrl) simCtrl.classList.remove('hidden');
+                    let lblSendU = document.getElementById('label-send-u');
+                    if(lblSendU) lblSendU.classList.add('hidden');
 
-                // Reset toggle gửi u
-                document.getElementById('toggle-send-u').checked = false;
-                sendUToSerial = false;
-            }
-        });
+                    // Tự động dừng vòng lặp
+                    let btnPlay = document.getElementById('btn-play');
+                    if (isRunning && btnPlay) btnPlay.click();
+
+                    // Reset toggle gửi u
+                    let sendUToggle = document.getElementById('toggle-send-u');
+                    if(sendUToggle) sendUToggle.checked = false;
+                    sendUToSerial = false;
+                }
+            });
+        }
 
         // Lắng nghe gửi tín hiệu u xuống COM
-        document.getElementById('toggle-send-u').addEventListener('change', (e) => {
-            sendUToSerial = e.target.checked;
-        });
+        let sendUToggle = document.getElementById('toggle-send-u');
+        if(sendUToggle) {
+            sendUToggle.addEventListener('change', (e) => {
+                sendUToSerial = e.target.checked;
+            });
+        }
 
         // Lắng nghe thanh trượt LPF
-        document.getElementById('input-lpf').addEventListener('input', (e) => {
-            lpf_alpha = parseFloat(e.target.value);
-            document.getElementById('val-lpf').textContent = lpf_alpha.toFixed(2);
-        });
+        let lpfInput = document.getElementById('input-lpf');
+        if(lpfInput) {
+            lpfInput.addEventListener('input', (e) => {
+                lpf_alpha = parseFloat(e.target.value);
+                let lpfVal = document.getElementById('val-lpf');
+                if(lpfVal) lpfVal.textContent = lpf_alpha.toFixed(2);
+            });
+        }
 
         // Lắng nghe thay đổi ẩn/hiện đồ thị tín hiệu
-        document.getElementById('toggle-error').addEventListener('change', (e) => {
-            document.getElementById('container-error').classList.toggle('hidden', !e.target.checked);
-        });
-        document.getElementById('toggle-ueq').addEventListener('change', (e) => {
-            document.getElementById('container-ueq').classList.toggle('hidden', !e.target.checked);
-        });
-        document.getElementById('toggle-usw').addEventListener('change', (e) => {
-            document.getElementById('container-usw').classList.toggle('hidden', !e.target.checked);
-        });
-        document.getElementById('toggle-u').addEventListener('change', (e) => {
-            document.getElementById('container-u').classList.toggle('hidden', !e.target.checked);
-        });
+        let togDepth = document.getElementById('toggle-depth');
+        if(togDepth) {
+            togDepth.addEventListener('change', (e) => {
+                let el = document.getElementById('container-depth');
+                if(el) el.classList.toggle('hidden', !e.target.checked);
+            });
+        }
+        let togError = document.getElementById('toggle-error');
+        if(togError) {
+            togError.addEventListener('change', (e) => {
+                let el = document.getElementById('container-error');
+                if(el) el.classList.toggle('hidden', !e.target.checked);
+            });
+        }
+        let togUeq = document.getElementById('toggle-ueq');
+        if(togUeq) {
+            togUeq.addEventListener('change', (e) => {
+                let el = document.getElementById('container-ueq');
+                if(el) el.classList.toggle('hidden', !e.target.checked);
+            });
+        }
+        let togUsw = document.getElementById('toggle-usw');
+        if(togUsw) {
+            togUsw.addEventListener('change', (e) => {
+                let el = document.getElementById('container-usw');
+                if(el) el.classList.toggle('hidden', !e.target.checked);
+            });
+        }
+        let togU = document.getElementById('toggle-u');
+        if(togU) {
+            togU.addEventListener('change', (e) => {
+                let el = document.getElementById('container-u');
+                if(el) el.classList.toggle('hidden', !e.target.checked);
+            });
+        }
 
         // Lắng nghe thay đổi Tự động Scale từng biểu đồ
-        const scaleToggles = ['scale-state', 'scale-phase2d', 'scale-phase3d', 'scale-time', 'scale-error', 'scale-ueq', 'scale-usw', 'scale-u'];
+        const scaleToggles = ['scale-state', 'scale-phase2d', 'scale-phase3d', 'scale-time', 'scale-depth', 'scale-error', 'scale-ueq', 'scale-usw', 'scale-u'];
         scaleToggles.forEach(id => {
-            document.getElementById(id).addEventListener('change', updateChartScales);
+            let el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('change', updateChartScales);
+            }
         });
 
         // Lắng nghe thay đổi Cửa sổ thời gian hiển thị đồ thị
-        document.getElementById('input-time-window').addEventListener('input', (e) => {
-            let val = parseFloat(e.target.value);
-            if (!isNaN(val) && val > 0) {
-                displayTimeWindow = val;
-            }
-        });
+        let timeWinInput = document.getElementById('input-time-window');
+        if(timeWinInput) {
+            timeWinInput.addEventListener('input', (e) => {
+                let val = parseFloat(e.target.value);
+                if (!isNaN(val) && val > 0) {
+                    displayTimeWindow = val;
+                }
+            });
+        }
 
         // Lắng nghe thay đổi loại mặt trượt
         document.querySelectorAll('input[name="surface_type"]').forEach(radio => {
             radio.addEventListener('change', (e) => {
                 surfaceType = e.target.value;
                 updateVisibility();
-                document.getElementById('btn-reset').click(); // Đặt lại mô phỏng khi đổi chế độ
+                let btnRst = document.getElementById('btn-reset');
+                if(btnRst) btnRst.click();
             });
         });
 
@@ -1503,238 +1882,331 @@
             radio.addEventListener('change', (e) => {
                 reachingType = e.target.value;
                 updateVisibility();
-                document.getElementById('btn-reset').click();
+                let btnRst = document.getElementById('btn-reset');
+                if(btnRst) btnRst.click();
             });
         });
 
         // Lắng nghe thay đổi thông số SOPDT (Ô nhập text/number)
-        document.getElementById('input-a1').addEventListener('input', (e) => {
-            let val = parseFloat(e.target.value);
-            if (!isNaN(val)) {
-                a1 = val;
-                if(!isRunning) calculateAndRenderMath();
-            }
-        });
-        document.getElementById('input-a2').addEventListener('input', (e) => {
-            let val = parseFloat(e.target.value);
-            if (!isNaN(val)) {
-                a2 = val;
-                if(!isRunning) calculateAndRenderMath();
-            }
-        });
-        document.getElementById('input-b').addEventListener('input', (e) => {
-            let val = parseFloat(e.target.value);
-            if (!isNaN(val) && val !== 0) { // Đề phòng lỗi chia cho 0
-                b_sys = val;
-                if(!isRunning) calculateAndRenderMath();
-            }
-        });
-        document.getElementById('input-L').addEventListener('input', (e) => {
-            let val = parseFloat(e.target.value);
-            if (!isNaN(val) && val >= 0) {
-                L = val;
-                u_buffer = []; // Xóa buffer để reset quá trình trễ khi đổi delay (ngăn lỗi jump)
-            }
-        });
+        let a1Inp = document.getElementById('input-a1');
+        if(a1Inp) {
+            a1Inp.addEventListener('input', (e) => {
+                let val = parseFloat(e.target.value);
+                if (!isNaN(val)) {
+                    a1 = val;
+                    if(!isRunning) calculateAndRenderMath();
+                }
+            });
+        }
+        let a2Inp = document.getElementById('input-a2');
+        if(a2Inp) {
+            a2Inp.addEventListener('input', (e) => {
+                let val = parseFloat(e.target.value);
+                if (!isNaN(val)) {
+                    a2 = val;
+                    if(!isRunning) calculateAndRenderMath();
+                }
+            });
+        }
+        let bInp = document.getElementById('input-b');
+        if(bInp) {
+            bInp.addEventListener('input', (e) => {
+                let val = parseFloat(e.target.value);
+                if (!isNaN(val) && val !== 0) { // Đề phòng lỗi chia cho 0
+                    b_sys = val;
+                    if(!isRunning) calculateAndRenderMath();
+                }
+            });
+        }
+        let lInp = document.getElementById('input-L');
+        if(lInp) {
+            lInp.addEventListener('input', (e) => {
+                let val = parseFloat(e.target.value);
+                if (!isNaN(val) && val >= 0) {
+                    L = val;
+                    u_buffer = []; // Xóa buffer để reset quá trình trễ khi đổi delay
+                }
+            });
+        }
 
         // Lắng nghe Nhiễu
-        document.getElementById('toggle-noise').addEventListener('change', (e) => {
-            noiseEnabled = e.target.checked;
-            let paramBox = document.getElementById('noise-params');
-            if (noiseEnabled) {
-                paramBox.style.opacity = '1';
-                paramBox.style.pointerEvents = 'auto';
-                document.getElementById('noise-badge').classList.remove('hidden');
-            } else {
-                paramBox.style.opacity = '0.5';
-                paramBox.style.pointerEvents = 'none';
-                document.getElementById('noise-badge').classList.add('hidden');
+        let togNoise = document.getElementById('toggle-noise');
+        if(togNoise) {
+            togNoise.addEventListener('change', (e) => {
+                noiseEnabled = e.target.checked;
+                let paramBox = document.getElementById('noise-params');
+                let noiseBadge = document.getElementById('noise-badge');
                 
-                // Trả x_m, v_m về đúng giá trị thực khi tắt nhiễu
-                x_m = x;
-                v_m = v;
-                if(!isRunning) calculateAndRenderMath();
-            }
-        });
+                if (noiseEnabled) {
+                    if(paramBox) {
+                        paramBox.style.opacity = '1';
+                        paramBox.style.pointerEvents = 'auto';
+                    }
+                    if(noiseBadge) noiseBadge.classList.remove('hidden');
+                } else {
+                    if(paramBox) {
+                        paramBox.style.opacity = '0.5';
+                        paramBox.style.pointerEvents = 'none';
+                    }
+                    if(noiseBadge) noiseBadge.classList.add('hidden');
+                    
+                    // Trả x_m, v_m về đúng giá trị thực khi tắt nhiễu
+                    x_m = x;
+                    v_m = v;
+                    if(!isRunning) calculateAndRenderMath();
+                }
+            });
+        }
 
-        document.getElementById('input-noise-x').addEventListener('input', (e) => {
-            let val = parseFloat(e.target.value);
-            if (!isNaN(val) && val >= 0) noiseAmpX = val;
-        });
+        let noiseXInp = document.getElementById('input-noise-x');
+        if(noiseXInp) {
+            noiseXInp.addEventListener('input', (e) => {
+                let val = parseFloat(e.target.value);
+                if (!isNaN(val) && val >= 0) noiseAmpX = val;
+            });
+        }
 
-        document.getElementById('input-noise-v').addEventListener('input', (e) => {
-            let val = parseFloat(e.target.value);
-            if (!isNaN(val) && val >= 0) noiseAmpV = val;
-        });
+        let noiseVInp = document.getElementById('input-noise-v');
+        if(noiseVInp) {
+            noiseVInp.addEventListener('input', (e) => {
+                let val = parseFloat(e.target.value);
+                if (!isNaN(val) && val >= 0) noiseAmpV = val;
+            });
+        }
 
         // Lắng nghe Bật/tắt Smith Predictor
-        document.getElementById('toggle-sp').addEventListener('change', (e) => {
-            spEnabled = e.target.checked;
-            if (spEnabled) {
-                document.getElementById('theory-sp').classList.remove('hidden');
-                document.getElementById('theory-no-sp').classList.add('hidden');
-            } else {
-                document.getElementById('theory-sp').classList.add('hidden');
-                document.getElementById('theory-no-sp').classList.remove('hidden');
-            }
-            if(!isRunning) calculateAndRenderMath();
-        });
+        let togSp = document.getElementById('toggle-sp');
+        if(togSp) {
+            togSp.addEventListener('change', (e) => {
+                spEnabled = e.target.checked;
+                let theorySp = document.getElementById('theory-sp');
+                let theoryNoSp = document.getElementById('theory-no-sp');
+                
+                if (spEnabled) {
+                    if(theorySp) theorySp.classList.remove('hidden');
+                    if(theoryNoSp) theoryNoSp.classList.add('hidden');
+                } else {
+                    if(theorySp) theorySp.classList.add('hidden');
+                    if(theoryNoSp) theoryNoSp.classList.remove('hidden');
+                }
+                if(!isRunning) calculateAndRenderMath();
+            });
+        }
 
-        // Lắng nghe thanh trượt thay đổi bộ điều khiển
-        document.getElementById('input-xd').addEventListener('input', (e) => {
-            xd = parseFloat(e.target.value);
-            document.getElementById('val-xd').textContent = xd.toFixed(3);
-            
-            // Cập nhật điểm đích trên biểu đồ trạng thái
-            stateChart.data.datasets[1].data = [{x: xd, y: 0}];
-            stateChart.update();
-            
-            if(!isRunning) calculateAndRenderMath();
-        });
-
-        document.getElementById('input-lambda').addEventListener('input', (e) => {
-            lambda = parseFloat(e.target.value);
-            document.getElementById('val-lambda').textContent = lambda.toFixed(3);
-            updateSlidingSurfaceLine();
-            if(!isRunning) calculateAndRenderMath();
-        });
-
-        document.getElementById('input-kp').addEventListener('input', (e) => {
-            kp = parseFloat(e.target.value);
-            document.getElementById('val-kp').textContent = kp.toFixed(3);
-            updatePlotlySurface();
-            if(!isRunning) calculateAndRenderMath();
-        });
+        // Lắng nghe thanh trượt thay đổi mục tiêu (Depth, Beta)
+        let depthInp = document.getElementById('input-depth');
+        if(depthInp) {
+            depthInp.addEventListener('input', (e) => {
+                desire_depth = parseFloat(e.target.value);
+                let valDep = document.getElementById('val-depth');
+                if(valDep) valDep.textContent = desire_depth.toFixed(3);
+                updateReferenceAndCharts();
+            });
+        }
         
-        document.getElementById('input-ki').addEventListener('input', (e) => {
-            ki = parseFloat(e.target.value);
-            document.getElementById('val-ki').textContent = ki.toFixed(3);
-            updatePlotlySurface();
-            if(!isRunning) calculateAndRenderMath();
-        });
+        let betaInp = document.getElementById('input-beta');
+        if(betaInp) {
+            betaInp.addEventListener('input', (e) => {
+                // Chỉ cho phép update nếu không ở hardware mode (bởi hardware mode lấy beta từ cổng COM)
+                if (!hardwareMode) {
+                    beta = parseFloat(e.target.value);
+                    let valBeta = document.getElementById('val-beta');
+                    if(valBeta) valBeta.textContent = beta.toFixed(3);
+                    updateReferenceAndCharts();
+                }
+            });
+        }
+
+        let lamInp = document.getElementById('input-lambda');
+        if(lamInp) {
+            lamInp.addEventListener('input', (e) => {
+                lambda = parseFloat(e.target.value);
+                let vLam = document.getElementById('val-lambda');
+                if(vLam) vLam.textContent = lambda.toFixed(3);
+                updateSlidingSurfaceLine();
+                if(!isRunning) calculateAndRenderMath();
+            });
+        }
+
+        let kpInp = document.getElementById('input-kp');
+        if(kpInp) {
+            kpInp.addEventListener('input', (e) => {
+                kp = parseFloat(e.target.value);
+                let vKp = document.getElementById('val-kp');
+                if(vKp) vKp.textContent = kp.toFixed(3);
+                updatePlotlySurface();
+                if(!isRunning) calculateAndRenderMath();
+            });
+        }
         
-        document.getElementById('input-kd').addEventListener('input', (e) => {
-            kd = parseFloat(e.target.value);
-            document.getElementById('val-kd').textContent = kd.toFixed(3);
-            updatePlotlySurface();
-            if(!isRunning) calculateAndRenderMath();
-        });
+        let kiInp = document.getElementById('input-ki');
+        if(kiInp) {
+            kiInp.addEventListener('input', (e) => {
+                ki = parseFloat(e.target.value);
+                let vKi = document.getElementById('val-ki');
+                if(vKi) vKi.textContent = ki.toFixed(3);
+                updatePlotlySurface();
+                if(!isRunning) calculateAndRenderMath();
+            });
+        }
+        
+        let kdInp = document.getElementById('input-kd');
+        if(kdInp) {
+            kdInp.addEventListener('input', (e) => {
+                kd = parseFloat(e.target.value);
+                let vKd = document.getElementById('val-kd');
+                if(vKd) vKd.textContent = kd.toFixed(3);
+                updatePlotlySurface();
+                if(!isRunning) calculateAndRenderMath();
+            });
+        }
 
-        document.getElementById('input-k').addEventListener('input', (e) => {
-            K = parseFloat(e.target.value);
-            document.getElementById('val-k').textContent = K.toFixed(3);
-            if(!isRunning) calculateAndRenderMath();
-        });
+        let kInp = document.getElementById('input-k');
+        if(kInp) {
+            kInp.addEventListener('input', (e) => {
+                K = parseFloat(e.target.value);
+                let vK = document.getElementById('val-k');
+                if(vK) vK.textContent = K.toFixed(3);
+                if(!isRunning) calculateAndRenderMath();
+            });
+        }
 
-        document.getElementById('input-k2').addEventListener('input', (e) => {
-            K2 = parseFloat(e.target.value);
-            document.getElementById('val-k2').textContent = K2.toFixed(3);
-            if(!isRunning) calculateAndRenderMath();
-        });
+        let k2Inp = document.getElementById('input-k2');
+        if(k2Inp) {
+            k2Inp.addEventListener('input', (e) => {
+                K2 = parseFloat(e.target.value);
+                let vK2 = document.getElementById('val-k2');
+                if(vK2) vK2.textContent = K2.toFixed(3);
+                if(!isRunning) calculateAndRenderMath();
+            });
+        }
 
         // Nút điều khiển
         const btnPlay = document.getElementById('btn-play');
         const btnStep = document.getElementById('btn-step');
         
-        btnPlay.addEventListener('click', () => {
-            if (isRunning) {
-                clearInterval(simulationInterval);
-                isRunning = false;
-                btnPlay.textContent = "▶ Chạy tự động";
-                btnPlay.classList.replace('bg-yellow-500', 'bg-green-500');
-                btnPlay.classList.replace('hover:bg-yellow-600', 'hover:bg-green-600');
-                btnStep.disabled = false;
-                btnStep.classList.remove('opacity-50', 'cursor-not-allowed');
-            } else {
-                // Tốc độ chạy tự động: cứ 20ms chạy 1 bước dt
-                simulationInterval = setInterval(stepSimulation, 20);
-                isRunning = true;
-                btnPlay.textContent = "⏸ Dừng (Pause)";
-                btnPlay.classList.replace('bg-green-500', 'bg-yellow-500');
-                btnPlay.classList.replace('hover:bg-green-600', 'hover:bg-yellow-600');
-                btnStep.disabled = true; // Vô hiệu hóa nút step khi đang chạy auto
-                btnStep.classList.add('opacity-50', 'cursor-not-allowed');
-            }
-        });
+        if(btnPlay) {
+            btnPlay.addEventListener('click', () => {
+                if (isRunning) {
+                    clearInterval(simulationInterval);
+                    isRunning = false;
+                    btnPlay.textContent = "▶ Chạy tự động";
+                    btnPlay.classList.replace('bg-yellow-500', 'bg-green-500');
+                    btnPlay.classList.replace('hover:bg-yellow-600', 'hover:bg-green-600');
+                    if(btnStep) {
+                        btnStep.disabled = false;
+                        btnStep.classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
+                } else {
+                    // Tốc độ chạy tự động: cứ 20ms chạy 1 bước dt
+                    simulationInterval = setInterval(stepSimulation, 20);
+                    isRunning = true;
+                    btnPlay.textContent = "⏸ Dừng (Pause)";
+                    btnPlay.classList.replace('bg-green-500', 'bg-yellow-500');
+                    btnPlay.classList.replace('hover:bg-green-600', 'hover:bg-yellow-600');
+                    if(btnStep) {
+                        btnStep.disabled = true;
+                        btnStep.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                }
+            });
+        }
 
-        btnStep.addEventListener('click', () => {
-            if (!isRunning) {
-                stepSimulation();
-            }
-        });
+        if(btnStep) {
+            btnStep.addEventListener('click', () => {
+                if (!isRunning) {
+                    stepSimulation();
+                }
+            });
+        }
 
-        document.getElementById('btn-reset').addEventListener('click', () => {
-            if (isRunning) btnPlay.click(); // Dừng nếu đang chạy
-            
-            // Đặt lại biến state
-            x = 0.0;
-            v = 0.0;
-            t = 0.0;
-            
-            if (!hardwareMode) {
-                x_m = 0.0;
-                v_m = 0.0;
-            }
-            
-            x_ctrl = 0.0;
-            v_ctrl = 0.0;
-            x_hat = 0.0;
-            v_hat = 0.0;
-            x_bar = 0.0;
-            v_bar = 0.0;
+        let btnReset = document.getElementById('btn-reset');
+        if(btnReset) {
+            btnReset.addEventListener('click', () => {
+                if (isRunning && btnPlay) btnPlay.click(); // Dừng nếu đang chạy
+                
+                // Đặt lại biến state
+                x = 10.0;
+                v = 0.0;
+                t = 0.0;
+                
+                if (!hardwareMode) {
+                    x_m = 10.0;
+                    v_m = 0.0;
+                }
+                
+                x_ctrl = 10.0;
+                v_ctrl = 0.0;
+                x_hat = 10.0;
+                v_hat = 0.0;
+                x_bar = 10.0;
+                v_bar = 0.0;
+                
+                alpha_prev = 10.0;
 
-            int_e = 0.0;
-            v_sta = 0.0;
-            u_buffer = [];
-            renderFrame = 0;
-            document.getElementById('calc-udelayed').textContent = "0.000";
-            
-            // Xóa data đồ thị
-            stateChart.data.datasets[0].data = [{x: 0, y: 0}];
-            stateChart.data.datasets[1].data = [{x: xd, y: 0}];
-            phaseChart.data.datasets[0].data = [{x: -xd, y: 0}];
-            
-            pidTrajectory = { x: [-xd], y: [0], z: [0] };
-            if (isPlotlyInitialized && surfaceType === 'pid') {
-                Plotly.update('phase3dChart', {
-                    x: [pidTrajectory.x],
-                    y: [pidTrajectory.y],
-                    z: [pidTrajectory.z]
-                }, {}, [1]);
-            }
+                int_e = 0.0;
+                v_sta = 0.0;
+                u_buffer = [];
+                renderFrame = 0;
+                let calcUdel = document.getElementById('calc-udelayed');
+                if(calcUdel) calcUdel.textContent = "0.000";
+                
+                // Cập nhật lại reference
+                xd = calculate_lifting_angle(desire_depth, beta);
+                let current_est_depth = calculate_depth(x_m, beta);
 
-            timeChart.data.labels = [0];
-            timeChart.data.datasets[0].data = [0];
-            timeChart.data.datasets[1].data = [xd];
-            
-            errorChart.data.labels = [0];
-            
-            controlUeqChart.data.labels = [0];
-            controlUswChart.data.labels = [0];
-            controlUChart.data.labels = [0];
-            
-            updateChartScales(); // Áp dụng lại scale khi reset
-            
-            stateChart.update();
-            phaseChart.update();
-            timeChart.update();
-            
-            updateSlidingSurfaceLine();
-            let resetControl = calculateAndRenderMath(); // Tính lại bước 0
-            
-            errorChart.data.datasets[0].data = [resetControl.e_ctrl];
-            errorChart.update();
-            
-            controlUeqChart.data.datasets[0].data = [resetControl.u_eq];
-            controlUeqChart.update();
-            
-            controlUswChart.data.datasets[0].data = [resetControl.u_sw];
-            controlUswChart.update();
-            
-            controlUChart.data.datasets[0].data = [resetControl.u];
-            controlUChart.data.datasets[1].data = [0];
-            controlUChart.update();
-        });
+                // Xóa data đồ thị
+                stateChart.data.datasets[0].data = [{x: x, y: v}];
+                stateChart.data.datasets[1].data = [{x: xd, y: 0}];
+                phaseChart.data.datasets[0].data = [{x: x - xd, y: 0}];
+                
+                pidTrajectory = { x: [x - xd], y: [0], z: [0] };
+                if (isPlotlyInitialized && surfaceType === 'pid') {
+                    Plotly.update('phase3dChart', {
+                        x: [pidTrajectory.x],
+                        y: [pidTrajectory.y],
+                        z: [pidTrajectory.z]
+                    }, {}, [1]);
+                }
+
+                timeChart.data.labels = [0];
+                timeChart.data.datasets[0].data = [x];
+                timeChart.data.datasets[1].data = [xd];
+                
+                depthChart.data.labels = [0];
+                depthChart.data.datasets[0].data = [current_est_depth];
+                depthChart.data.datasets[1].data = [desire_depth];
+
+                errorChart.data.labels = [0];
+                
+                controlUeqChart.data.labels = [0];
+                controlUswChart.data.labels = [0];
+                controlUChart.data.labels = [0];
+                
+                updateChartScales(); // Áp dụng lại scale khi reset
+                
+                stateChart.update();
+                phaseChart.update();
+                timeChart.update();
+                depthChart.update();
+                
+                updateSlidingSurfaceLine();
+                let resetControl = calculateAndRenderMath(); // Tính lại bước 0
+                
+                errorChart.data.datasets[0].data = [resetControl.e_ctrl];
+                errorChart.update();
+                
+                controlUeqChart.data.datasets[0].data = [resetControl.u_eq];
+                controlUeqChart.update();
+                
+                controlUswChart.data.datasets[0].data = [resetControl.u_sw];
+                controlUswChart.update();
+                
+                controlUChart.data.datasets[0].data = [resetControl.u];
+                controlUChart.data.datasets[1].data = [0];
+                controlUChart.update();
+            });
+        }
 
         // Khởi tạo lần đầu
         updateVisibility();
