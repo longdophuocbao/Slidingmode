@@ -33,6 +33,10 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Ẩn mũi tên tăng/giảm của thẻ input number */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="text-gray-800 p-4 md:p-8">
@@ -245,25 +249,23 @@
                             <div class="space-y-2" id="noise-params" style="opacity: 0.5; pointer-events: none;">
                                 <div class="flex justify-between items-center">
                                     <span class="text-xs text-gray-700">Biên độ \(\alpha\):</span>
-                                    <input type="number" id="input-noise-x" step="0.01" min="0" value="0.05" class="w-16 border border-gray-300 rounded px-1 text-xs text-right">
+                                    <input type="number" id="input-noise-x" step="0.01" min="0" value="0.05" class="w-16 border border-gray-300 rounded px-1 text-xs text-right focus:outline-none focus:border-yellow-500">
                                 </div>
                                 <div class="flex justify-between items-center">
                                     <span class="text-xs text-gray-700">Biên độ \(\dot{\alpha}\):</span>
-                                    <input type="number" id="input-noise-v" step="0.01" min="0" value="0.10" class="w-16 border border-gray-300 rounded px-1 text-xs text-right">
+                                    <input type="number" id="input-noise-v" step="0.01" min="0" value="0.10" class="w-16 border border-gray-300 rounded px-1 text-xs text-right focus:outline-none focus:border-yellow-500">
                                 </div>
                             </div>
                         </div>
                         
                         <!-- Chế độ Thực tế: Lọc Thông Thấp -->
                         <div id="hw-filter-config" class="hidden">
-                            <div class="flex items-center justify-between mb-2">
-                                <h3 class="font-bold text-indigo-800 text-sm">Lọc Thông Thấp (\(\dot{\alpha}\)):</h3>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="font-semibold text-xs text-indigo-900">Hệ số lọc \(\lambda_f\):</label>
+                                <input type="number" id="val-lpf" class="w-16 px-1 py-0.5 text-xs border border-indigo-300 rounded text-indigo-700 font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 text-right" value="0.80" step="0.01">
                             </div>
-                            <div class="space-y-2">
-                                <label class="block font-semibold text-xs text-gray-700">Hệ số lọc \(\lambda_f\): <span id="val-lpf" class="text-indigo-600">0.80</span></label>
-                                <input type="range" id="input-lpf" min="0.0" max="0.99" step="0.01" value="0.80" class="w-full">
-                                <p class="text-[10px] text-gray-500 italic leading-tight">\(v_m = \lambda_f \cdot v_{m-1} + (1-\lambda_f) \cdot v_{raw}\)</p>
-                            </div>
+                            <input type="range" id="input-lpf" min="0.0" max="0.99" step="0.01" value="0.80" class="w-full">
+                            <p class="text-[10px] text-gray-500 italic leading-tight mt-1">\(v_m = \lambda_f \cdot v_{m-1} + (1-\lambda_f) \cdot v_{raw}\)</p>
                         </div>
                     </div>
 
@@ -271,11 +273,17 @@
                     <div class="mb-4 space-y-4 text-sm">
                         <div class="grid grid-cols-2 gap-3 p-3 bg-green-50 border border-green-200 rounded-lg shadow-inner">
                             <div class="col-span-2 sm:col-span-1">
-                                <label class="block font-semibold mb-1 text-green-900 text-xs">Độ sâu mm (Depth): <span id="val-depth" class="text-green-700 font-bold">40.000</span></label>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="font-semibold text-green-900 text-xs">Độ sâu (mm):</label>
+                                    <input type="number" id="val-depth" class="w-20 px-1 py-0.5 text-xs border border-green-300 rounded text-green-700 font-bold focus:outline-none focus:ring-1 focus:ring-green-500 text-right" value="40.000" step="0.001">
+                                </div>
                                 <input type="range" id="input-depth" min="40" max="150" step="0.001" value="40.0" class="w-full">
                             </div>
                             <div class="col-span-2 sm:col-span-1">
-                                <label class="block font-semibold mb-1 text-green-900 text-xs">Góc phụ (\(\beta\)): <span id="val-beta" class="text-green-700 font-bold">5.000</span>°</label>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="font-semibold text-green-900 text-xs">Góc phụ \(\beta\) (°):</label>
+                                    <input type="number" id="val-beta" class="w-16 px-1 py-0.5 text-xs border border-green-300 rounded text-green-700 font-bold focus:outline-none focus:ring-1 focus:ring-green-500 text-right" value="5.000" step="0.001">
+                                </div>
                                 <input type="range" id="input-beta" min="0" max="45" step="0.001" value="5.0" class="w-full">
                             </div>
                             <div class="col-span-2 pt-2 border-t border-green-200 text-center flex flex-col">
@@ -314,36 +322,59 @@
                     <div class="space-y-4 text-sm mt-4">
                         <!-- Params Linear -->
                         <div id="params-linear">
-                            <label class="block font-semibold mb-1">Độ dốc mặt trượt (\(\lambda\)): <span id="val-lambda" class="text-blue-600">2.000</span></label>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="font-semibold text-gray-700 text-sm">Độ dốc mặt trượt (\(\lambda\)):</label>
+                                <input type="number" id="val-lambda" class="w-20 px-2 py-0.5 text-sm border border-blue-300 rounded text-blue-600 font-bold focus:outline-none focus:ring-1 focus:ring-blue-500 text-right" value="2.000" step="0.001">
+                            </div>
                             <input type="range" id="input-lambda" min="0" max="100" step="0.001" value="2.0" class="w-full">
                         </div>
 
                         <!-- Params PID -->
-                        <div id="params-pid" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <div id="params-pid" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-4">
                             <div>
-                                <label class="block font-semibold mb-1">\(K_p\): <span id="val-kp" class="text-blue-600">2.000</span></label>
-                                <input type="range" id="input-kp" min="0.001" max="200" step="0.001" value="2.0" class="w-full">
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="font-semibold">\(K_p\):</label>
+                                    <input type="number" id="val-kp" class="w-16 px-1 py-0.5 text-xs border border-blue-300 rounded text-blue-600 font-bold focus:outline-none focus:ring-1 focus:ring-blue-500 text-right" value="2.000" step="0.001">
+                                </div>
+                                <input type="range" id="input-kp" min="0.001" max="10" step="0.001" value="2.0" class="w-full">
                             </div>
                             <div>
-                                <label class="block font-semibold mb-1">\(K_i\): <span id="val-ki" class="text-blue-600">0.500</span></label>
-                                <input type="range" id="input-ki" min="0.001" max="200" step="0.001" value="0.5" class="w-full">
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="font-semibold">\(K_i\):</label>
+                                    <input type="number" id="val-ki" class="w-16 px-1 py-0.5 text-xs border border-blue-300 rounded text-blue-600 font-bold focus:outline-none focus:ring-1 focus:ring-blue-500 text-right" value="0.500" step="0.001">
+                                </div>
+                                <input type="range" id="input-ki" min="0.001" max="5" step="0.001" value="0.5" class="w-full">
                             </div>
                             <div>
-                                <label class="block font-semibold mb-1">\(K_d\): <span id="val-kd" class="text-blue-600">1.000</span></label>
-                                <input type="range" id="input-kd" min="0.001" max="200" step="0.001" value="1.0" class="w-full">
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="font-semibold">\(K_d\):</label>
+                                    <input type="number" id="val-kd" class="w-16 px-1 py-0.5 text-xs border border-blue-300 rounded text-blue-600 font-bold focus:outline-none focus:ring-1 focus:ring-blue-500 text-right" value="1.000" step="0.001">
+                                </div>
+                                <input type="range" id="input-kd" min="0.001" max="5" step="0.001" value="1.0" class="w-full">
                             </div>
                             <div id="param-eta">
-                                <label class="block font-semibold mb-1">\(\eta\): <span id="val-eta" class="text-blue-600">1.000</span></label>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="font-semibold">\(\eta\):</label>
+                                    <input type="number" id="val-eta" class="w-16 px-1 py-0.5 text-xs border border-blue-300 rounded text-blue-600 font-bold focus:outline-none focus:ring-1 focus:ring-blue-500 text-right" value="1.000" step="0.001">
+                                </div>
                                 <input type="range" id="input-eta" min="0.001" max="10" step="0.001" value="1.0" class="w-full">
                             </div>
                         </div>
+                        
                         <div>
-                            <label class="block font-semibold mb-1">Hệ số chuyển mạch (\(K\)): <span id="val-k" class="text-blue-600">5.000</span></label>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="font-semibold text-gray-700 text-sm">Hệ số chuyển mạch (\(K\)):</label>
+                                <input type="number" id="val-k" class="w-20 px-2 py-0.5 text-sm border border-blue-300 rounded text-blue-600 font-bold focus:outline-none focus:ring-1 focus:ring-blue-500 text-right" value="5.000" step="0.001">
+                            </div>
                             <input type="range" id="input-k" min="0" max="100" step="0.001" value="5.0" class="w-full">
                         </div>
+                        
                         <!-- Params Super-Twisting -->
                         <div id="params-sta" class="hidden">
-                            <label class="block font-semibold mb-1">Hệ số tích phân STA (\(K_2\)): <span id="val-k2" class="text-blue-600">10.000</span></label>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="font-semibold text-gray-700 text-sm">Hệ số tích phân STA (\(K_2\)):</label>
+                                <input type="number" id="val-k2" class="w-20 px-2 py-0.5 text-sm border border-blue-300 rounded text-blue-600 font-bold focus:outline-none focus:ring-1 focus:ring-blue-500 text-right" value="10.000" step="0.001">
+                            </div>
                             <input type="range" id="input-k2" min="0.001" max="50" step="0.001" value="10.0" class="w-full">
                         </div>
                         
@@ -434,7 +465,7 @@
 
                 <!-- Đồ thị -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2 relative">
                         <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1 shadow-sm border border-gray-200">
                             <label class="inline-flex items-center cursor-pointer" title="Tự động Scale Trục">
                                 <input type="checkbox" id="scale-state" class="form-checkbox text-indigo-600 w-3 h-3" checked>
@@ -447,7 +478,7 @@
                     </div>
                     
                     <!-- Container Quỹ đạo 2D (Linear) -->
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative" id="phase2d-container">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2 relative" id="phase2d-container">
                         <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1 shadow-sm border border-gray-200">
                             <label class="inline-flex items-center cursor-pointer" title="Tự động Scale Trục">
                                 <input type="checkbox" id="scale-phase2d" class="form-checkbox text-indigo-600 w-3 h-3" checked>
@@ -460,7 +491,7 @@
                     </div>
 
                     <!-- Container Quỹ đạo 3D (PID) -->
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hidden relative" id="phase3d-container">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 md:col-span-2 hidden relative" id="phase3d-container">
                         <div class="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded p-1 shadow-sm border border-gray-200">
                             <label class="inline-flex items-center cursor-pointer" title="Tự động Scale Trục">
                                 <input type="checkbox" id="scale-phase3d" class="form-checkbox text-indigo-600 w-3 h-3" checked>
@@ -1337,7 +1368,7 @@
                 u = u_eq + u_sw;
             }
 
-            // --- ĐỊNH DẠNG ĐỂ HIỂN THỊ TRÊN GIAO DIỆN ---
+            // --- ĐỊNH DẠNG ĐỂ HIỂN TRÊN GIAO DIỆN ---
             const f = (val) => val.toFixed(3); // format 3 chữ số
             const fb = (val) => Math.abs(val) < 0.001 && val !== 0 ? val.toExponential(2) : val.toFixed(3); // format cho các số cực nhỏ như b_sys
             
@@ -1441,7 +1472,7 @@
                 let betaInputEl = document.getElementById('input-beta');
                 if(betaInputEl) betaInputEl.value = beta;
                 let valBetaEl = document.getElementById('val-beta');
-                if(valBetaEl) valBetaEl.textContent = beta.toFixed(3);
+                if(valBetaEl) valBetaEl.value = beta.toFixed(3);
                 
                 // Cập nhật giá trị reference đích mới
                 xd = calculate_lifting_angle(desire_depth, beta);
@@ -1725,6 +1756,85 @@
             if(activeUsw) activeUsw.classList.remove('hidden');
         }
 
+        // --- BIND DUAL INPUTS (SLIDER + NUMBER BOX) ---
+        function bindDualInputs(sliderId, numberId, onChangeFunc, decimals = 3) {
+            const slider = document.getElementById(sliderId);
+            const number = document.getElementById(numberId);
+            if(slider && number) {
+                slider.addEventListener('input', (e) => {
+                    let val = parseFloat(e.target.value);
+                    number.value = val.toFixed(decimals);
+                    onChangeFunc(val);
+                });
+                number.addEventListener('change', (e) => {
+                    let val = parseFloat(e.target.value);
+                    if(!isNaN(val)) {
+                        let min = parseFloat(slider.min);
+                        let max = parseFloat(slider.max);
+                        if (val < min) val = min;
+                        if (val > max) val = max;
+                        number.value = val.toFixed(decimals);
+                        slider.value = val;
+                        onChangeFunc(val);
+                    }
+                });
+            }
+        }
+
+        bindDualInputs('input-lpf', 'val-lpf', val => lpf_alpha = val, 2);
+        
+        bindDualInputs('input-depth', 'val-depth', val => {
+            desire_depth = val;
+            updateReferenceAndCharts();
+        });
+
+        bindDualInputs('input-beta', 'val-beta', val => {
+            if (!hardwareMode) {
+                beta = val;
+                updateReferenceAndCharts();
+            }
+        });
+
+        bindDualInputs('input-lambda', 'val-lambda', val => {
+            lambda = val;
+            updateSlidingSurfaceLine();
+            if(!isRunning) calculateAndRenderMath();
+        });
+
+        bindDualInputs('input-kp', 'val-kp', val => {
+            kp = val;
+            updatePlotlySurface();
+            if(!isRunning) calculateAndRenderMath();
+        });
+
+        bindDualInputs('input-ki', 'val-ki', val => {
+            ki = val;
+            updatePlotlySurface();
+            if(!isRunning) calculateAndRenderMath();
+        });
+
+        bindDualInputs('input-kd', 'val-kd', val => {
+            kd = val;
+            updatePlotlySurface();
+            if(!isRunning) calculateAndRenderMath();
+        });
+
+        bindDualInputs('input-eta', 'val-eta', val => {
+            eta = val;
+            updatePlotlySurface();
+            if(!isRunning) calculateAndRenderMath();
+        });
+
+        bindDualInputs('input-k', 'val-k', val => {
+            K = val;
+            if(!isRunning) calculateAndRenderMath();
+        });
+
+        bindDualInputs('input-k2', 'val-k2', val => {
+            K2 = val;
+            if(!isRunning) calculateAndRenderMath();
+        });
+
         // --- SỰ KIỆN GIAO DIỆN ---
         
         // Lắng nghe thay đổi phần cứng
@@ -1733,9 +1843,11 @@
             hwToggle.addEventListener('change', (e) => {
                 hardwareMode = e.target.checked;
                 
-                // Cập nhật ô nhập beta tùy theo hardware (nếu bật HM thì disable)
-                let betaInputEl = document.getElementById('input-beta');
-                if(betaInputEl) betaInputEl.disabled = hardwareMode;
+                // Cập nhật ô nhập beta tùy theo hardware (nếu bật HM thì disable cả slider và input number)
+                let betaRangeEl = document.getElementById('input-beta');
+                if(betaRangeEl) betaRangeEl.disabled = hardwareMode;
+                let betaNumEl = document.getElementById('val-beta');
+                if(betaNumEl) betaNumEl.disabled = hardwareMode;
 
                 if(hardwareMode) {
                     let hwBadge = document.getElementById('hardware-badge');
@@ -1810,16 +1922,6 @@
         if(sendUToggle) {
             sendUToggle.addEventListener('change', (e) => {
                 sendUToSerial = e.target.checked;
-            });
-        }
-
-        // Lắng nghe thanh trượt LPF
-        let lpfInput = document.getElementById('input-lpf');
-        if(lpfInput) {
-            lpfInput.addEventListener('input', (e) => {
-                lpf_alpha = parseFloat(e.target.value);
-                let lpfVal = document.getElementById('val-lpf');
-                if(lpfVal) lpfVal.textContent = lpf_alpha.toFixed(2);
             });
         }
 
@@ -1900,7 +2002,7 @@
             });
         });
 
-        // Lắng nghe thay đổi thông số SOPDT (Ô nhập text/number)
+        // Lắng nghe thay đổi thông số SOPDT (Ô nhập text/number - các ô này không có slider)
         let a1Inp = document.getElementById('input-a1');
         if(a1Inp) {
             a1Inp.addEventListener('input', (e) => {
@@ -2002,105 +2104,6 @@
                     if(theorySp) theorySp.classList.add('hidden');
                     if(theoryNoSp) theoryNoSp.classList.remove('hidden');
                 }
-                if(!isRunning) calculateAndRenderMath();
-            });
-        }
-
-        // Lắng nghe thanh trượt thay đổi mục tiêu (Depth, Beta)
-        let depthInp = document.getElementById('input-depth');
-        if(depthInp) {
-            depthInp.addEventListener('input', (e) => {
-                desire_depth = parseFloat(e.target.value);
-                let valDep = document.getElementById('val-depth');
-                if(valDep) valDep.textContent = desire_depth.toFixed(3);
-                updateReferenceAndCharts();
-            });
-        }
-        
-        let betaInp = document.getElementById('input-beta');
-        if(betaInp) {
-            betaInp.addEventListener('input', (e) => {
-                // Chỉ cho phép update nếu không ở hardware mode (bởi hardware mode lấy beta từ cổng COM)
-                if (!hardwareMode) {
-                    beta = parseFloat(e.target.value);
-                    let valBeta = document.getElementById('val-beta');
-                    if(valBeta) valBeta.textContent = beta.toFixed(3);
-                    updateReferenceAndCharts();
-                }
-            });
-        }
-
-        let lamInp = document.getElementById('input-lambda');
-        if(lamInp) {
-            lamInp.addEventListener('input', (e) => {
-                lambda = parseFloat(e.target.value);
-                let vLam = document.getElementById('val-lambda');
-                if(vLam) vLam.textContent = lambda.toFixed(3);
-                updateSlidingSurfaceLine();
-                if(!isRunning) calculateAndRenderMath();
-            });
-        }
-
-        let kpInp = document.getElementById('input-kp');
-        if(kpInp) {
-            kpInp.addEventListener('input', (e) => {
-                kp = parseFloat(e.target.value);
-                let vKp = document.getElementById('val-kp');
-                if(vKp) vKp.textContent = kp.toFixed(3);
-                updatePlotlySurface();
-                if(!isRunning) calculateAndRenderMath();
-            });
-        }
-        
-        let kiInp = document.getElementById('input-ki');
-        if(kiInp) {
-            kiInp.addEventListener('input', (e) => {
-                ki = parseFloat(e.target.value);
-                let vKi = document.getElementById('val-ki');
-                if(vKi) vKi.textContent = ki.toFixed(3);
-                updatePlotlySurface();
-                if(!isRunning) calculateAndRenderMath();
-            });
-        }
-        
-        let kdInp = document.getElementById('input-kd');
-        if(kdInp) {
-            kdInp.addEventListener('input', (e) => {
-                kd = parseFloat(e.target.value);
-                let vKd = document.getElementById('val-kd');
-                if(vKd) vKd.textContent = kd.toFixed(3);
-                updatePlotlySurface();
-                if(!isRunning) calculateAndRenderMath();
-            });
-        }
-
-        let etaInp = document.getElementById('input-eta');
-        if(etaInp) {
-            etaInp.addEventListener('input', (e) => {
-                eta = parseFloat(e.target.value);
-                let vEta = document.getElementById('val-eta');
-                if(vEta) vEta.textContent = eta.toFixed(3);
-                updatePlotlySurface();
-                if(!isRunning) calculateAndRenderMath();
-            });
-        }
-
-        let kInp = document.getElementById('input-k');
-        if(kInp) {
-            kInp.addEventListener('input', (e) => {
-                K = parseFloat(e.target.value);
-                let vK = document.getElementById('val-k');
-                if(vK) vK.textContent = K.toFixed(3);
-                if(!isRunning) calculateAndRenderMath();
-            });
-        }
-
-        let k2Inp = document.getElementById('input-k2');
-        if(k2Inp) {
-            k2Inp.addEventListener('input', (e) => {
-                K2 = parseFloat(e.target.value);
-                let vK2 = document.getElementById('val-k2');
-                if(vK2) vK2.textContent = K2.toFixed(3);
                 if(!isRunning) calculateAndRenderMath();
             });
         }
