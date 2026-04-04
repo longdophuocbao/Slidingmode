@@ -129,11 +129,11 @@
                     <!-- Bước 3 -->
                     <div>
                         <h3 class="font-bold text-gray-800 text-base">Bước 3: Định nghĩa Sai số (Error)</h3>
-                        <p class="mt-1">Mục tiêu là đưa góc hiện tại (\(\alpha_{ctrl}\)) bám theo góc tham chiếu (\(\alpha_{ref}\)). \(\alpha_{ref}\) được tính toán tự động qua nội suy bậc 3 dựa trên <strong>Độ sâu mong muốn</strong> và <strong>Góc đo phụ \(\beta\)</strong>. Ta gọi độ lệch này là Sai số \(e\).</p>
+                        <p class="mt-1">Mục tiêu là đưa góc hiện tại (\(\alpha_{ctrl}\)) bám theo góc tham chiếu (\(\alpha_{ref}\)). \(\alpha_{ref}\) được tính toán tự động qua nội suy bậc 3 dựa trên <strong>Độ sâu mong muốn</strong> và <strong>Góc đo phụ \(\beta\)</strong>. Ta sử dụng một bộ lọc tham chiếu (Reference Model) bậc 2 để tạo ra quỹ đạo động học \(\alpha_{ref}, \dot{\alpha}_{ref}, \ddot{\alpha}_{ref}\) mượt mà.</p>
                         <ul class="list-disc pl-5 mt-1">
                             <li>Sai số góc: \(e = \alpha_{ctrl} - \alpha_{ref}\)</li>
-                            <li>Đạo hàm sai số: \(\dot{e} \approx \dot{\alpha}_{ctrl}\) (Giả sử \(\alpha_{ref}\) thay đổi đủ chậm).</li>
-                            <li>Đạo hàm bậc hai: \(\ddot{e} \approx \ddot{\alpha}_{ctrl}\)</li>
+                            <li>Đạo hàm sai số: \(\dot{e} = \dot{\alpha}_{ctrl} - \dot{\alpha}_{ref}\)</li>
+                            <li>Đạo hàm bậc hai: \(\ddot{e} = \ddot{\alpha}_{ctrl} - \ddot{\alpha}_{ref}\)</li>
                         </ul>
                     </div>
 
@@ -150,11 +150,11 @@
                         <div class="space-y-2 mt-2">
                             <p><strong>a. Lực tương đương (\(u_{eq}\)):</strong> Làm nhiệm vụ "triệt tiêu" các tác động tự nhiên của hệ thống (lực cản, đàn hồi) để giữ cho \(s\) không đổi (\(\dot{s} = 0\)).</p>
                             <ul class="list-decimal pl-5 text-gray-700 text-xs md:text-sm">
-                                <li>Lấy đạo hàm \(s\): \(\dot{s} = \ddot{e} + \lambda\dot{e} = \ddot{\alpha}_{ctrl} + \lambda\dot{\alpha}_{ctrl}\)</li>
-                                <li>Thế pt động lực học vào \(\ddot{\alpha}_{ctrl}\): \(\dot{s} = (-a_1\dot{\alpha}_{ctrl} - a_2 \alpha_{ctrl} + b \cdot u) + \lambda\dot{\alpha}_{ctrl}\)</li>
+                                <li>Lấy đạo hàm \(s\): \(\dot{s} = \ddot{e} + \lambda\dot{e} = (\ddot{\alpha}_{ctrl} - \ddot{\alpha}_{ref}) + \lambda\dot{e}\)</li>
+                                <li>Thế pt động lực học: \(\dot{s} = (-a_1\dot{\alpha}_{ctrl} - a_2 \alpha_{ctrl} + b \cdot u) - \ddot{\alpha}_{ref} + \lambda\dot{e}\)</li>
                                 <li>Giải phương trình \(\dot{s} = 0\) để tìm \(u_{eq}\): <br>
-                                    \(\Rightarrow b \cdot u_{eq} = a_1\dot{\alpha}_{ctrl} + a_2 \alpha_{ctrl} - \lambda\dot{\alpha}_{ctrl}\) <br>
-                                    \(\Rightarrow u_{eq} = \frac{1}{b}(a_1\dot{\alpha}_{ctrl} + a_2 \alpha_{ctrl} - \lambda\dot{\alpha}_{ctrl})\)
+                                    \(\Rightarrow b \cdot u_{eq} = a_1\dot{\alpha}_{ctrl} + a_2 \alpha_{ctrl} + \ddot{\alpha}_{ref} - \lambda\dot{e}\) <br>
+                                    \(\Rightarrow u_{eq} = \frac{1}{b}(a_1\dot{\alpha}_{ctrl} + a_2 \alpha_{ctrl} + \ddot{\alpha}_{ref} - \lambda\dot{e})\)
                                 </li>
                             </ul>
                         </div>
@@ -177,11 +177,11 @@
                         <div class="space-y-2 mt-2">
                             <p><strong>a. Lực tương đương (\(u_{eq}\)):</strong> Giải bài toán \(\dot{s} = 0\) để giữ hệ thống trượt ổn định.</p>
                             <ul class="list-decimal pl-5 text-gray-700 text-xs md:text-sm">
-                                <li>Lấy đạo hàm \(s\): \(\dot{s} = K_p\dot{e} + K_i e + K_d\ddot{e} = K_p\dot{\alpha}_{ctrl} + K_i e + K_d\ddot{\alpha}_{ctrl}\)</li>
-                                <li>Thế pt động lực học: \(\dot{s} = K_p\dot{\alpha}_{ctrl} + K_i e + K_d(-a_1\dot{\alpha}_{ctrl} - a_2 \alpha_{ctrl} + b \cdot u)\)</li>
+                                <li>Lấy đạo hàm \(s\): \(\dot{s} = K_p\dot{e} + K_i e + K_d\ddot{e} = K_p\dot{e} + K_i e + K_d(\ddot{\alpha}_{ctrl} - \ddot{\alpha}_{ref})\)</li>
+                                <li>Thế pt động lực học: \(\dot{s} = K_p\dot{e} + K_i e + K_d(-a_1\dot{\alpha}_{ctrl} - a_2 \alpha_{ctrl} + b \cdot u - \ddot{\alpha}_{ref})\)</li>
                                 <li>Giải phương trình \(\dot{s} = 0\) để tìm \(u_{eq}\): <br>
-                                    \(\Rightarrow K_d(b \cdot u_{eq}) = K_d(a_1\dot{\alpha}_{ctrl} + a_2 \alpha_{ctrl}) - K_p\dot{\alpha}_{ctrl} - K_i e\) <br>
-                                    \(\Rightarrow u_{eq} = \frac{1}{b}\left(a_1\dot{\alpha}_{ctrl} + a_2 \alpha_{ctrl} - \frac{K_p}{K_d}\dot{\alpha}_{ctrl} - \frac{K_i}{K_d}e\right)\)
+                                    \(\Rightarrow K_d(b \cdot u_{eq}) = K_d(a_1\dot{\alpha}_{ctrl} + a_2 \alpha_{ctrl} + \ddot{\alpha}_{ref}) - K_p\dot{e} - K_i e\) <br>
+                                    \(\Rightarrow u_{eq} = \frac{1}{b}\left(a_1\dot{\alpha}_{ctrl} + a_2 \alpha_{ctrl} + \ddot{\alpha}_{ref} - \frac{K_p}{K_d}\dot{e} - \frac{K_i}{K_d}e\right)\)
                                 </li>
                             </ul>
                         </div>
@@ -288,7 +288,7 @@
                             </div>
                             <div class="col-span-2 pt-2 border-t border-green-200 text-center flex flex-col">
                                 <div>
-                                    <span class="font-bold text-gray-700 text-sm">Góc tham chiếu \(\alpha_{ref}\): </span>
+                                    <span class="font-bold text-gray-700 text-sm">Góc đích (Mục tiêu): </span>
                                     <span id="val-alpha-ref" class="text-lg font-bold text-green-600">10.000</span><span class="text-green-600">°</span>
                                 </div>
                             </div>
@@ -412,23 +412,28 @@
                             <span class="text-right flex-shrink-0">\(\alpha_{ctrl} =\) <span id="calc-xctrl-sp" class="highlight-value text-purple-700">0.000</span></span>
                         </div>
 
-                        <div class="calc-row">
+                        <div class="calc-row border-b-0 pb-0">
                             <span>2. Trạng thái ĐIỀU KHIỂN (\(\alpha_{ctrl}\)):</span>
                             <span class="text-right flex-shrink-0">\(\alpha_{ctrl} =\) <span id="calc-xctrl" class="highlight-value">0.000</span>, \(\dot{\alpha}_{ctrl} =\) <span id="calc-vctrl" class="highlight-value">0.000</span></span>
                         </div>
 
-                        <div class="calc-row">
-                            <span>3. Sai số (\(e = \alpha_{ctrl} - \alpha_{ref}\)):</span>
-                            <span class="text-right flex-shrink-0"><span id="eq-e">0.000 - 10.000</span> = <span id="calc-e" class="highlight-value text-red-600">-10.000</span></span>
+                        <!-- Hàng Tham chiếu mới và Sai số -->
+                        <div class="calc-row flex-col sm:flex-row items-start sm:items-center">
+                            <span class="flex flex-col mb-1 sm:mb-0">
+                                <span>3. Tham chiếu & Sai số:</span>
+                                <span class="text-[11px] text-gray-500 mt-0.5">\(\alpha_{ref}\)=<span id="calc-aref">10.000</span>, \(\dot{\alpha}_{ref}\)=<span id="calc-aref-dot">0.000</span>, \(\ddot{\alpha}_{ref}\)=<span id="calc-aref-ddot">0.000</span></span>
+                            </span>
+                            <span class="text-right flex-shrink-0">\(e =\) <span id="eq-e">0.000 - 10.000</span> = <span id="calc-e" class="highlight-value text-red-600">-10.000</span></span>
                         </div>
+                        
                         <div class="calc-row hidden" id="row-inte">
                             <span>* Tích phân sai số (\(\int e dt\)):</span>
                             <span class="text-right flex-shrink-0">\(\sum e \cdot dt =\) <span id="calc-inte" class="highlight-value text-amber-600">0.000</span></span>
                         </div>
                         <div class="calc-row bg-blue-50 p-2 rounded -mx-2 px-2">
                             <span class="font-bold">
-                                <span class="label-linear">4. Mặt trượt (\(s = \dot{\alpha}_{ctrl} + \lambda e\)):</span>
-                                <span class="label-pid hidden">4. Mặt trượt (\(s = K_p e + K_i \int e dt + K_d \dot{\alpha}_{ctrl}\)):</span>
+                                <span class="label-linear">4. Mặt trượt (\(s = \dot{e} + \lambda e\)):</span>
+                                <span class="label-pid hidden">4. Mặt trượt (\(s = K_p e + K_i \int e dt + K_d \dot{e}\)):</span>
                             </span>
                             <span class="text-right flex-shrink-0"><span id="eq-s">...</span> = <span id="calc-s" class="highlight-value text-blue-700">-4.000</span></span>
                         </div>
@@ -512,7 +517,7 @@
                         </div>
                         <h3 class="font-bold text-center text-gray-700 mb-2">Đáp ứng thời gian (Góc \(\alpha\))</h3>
                         <canvas id="timeChart" height="150"></canvas>
-                        <p class="text-xs text-center text-gray-500 mt-2">Theo dõi Góc thực \(\alpha\) tiến về góc đích \(\alpha_{ref}\)</p>
+                        <p class="text-xs text-center text-gray-500 mt-2">Theo dõi Góc thực \(\alpha\) tiến về quỹ đạo đích \(\alpha_{ref}\)</p>
                     </div>
 
                     <!-- Biểu đồ Độ sâu (Depth) MỚI -->
@@ -687,7 +692,10 @@
         // Thông số bộ điều khiển
         let desire_depth = 40.0; 
         let beta = 5.0;
-        let xd = 10.0; // alpha_ref tính toán được
+        let target_alpha = 10.0; // Mục tiêu thô từ nội suy đa thức
+        let xd = 10.0;           // alpha_ref (đã qua lọc mượt)
+        let alpharef_dot = 0.0;
+        let alpharef_ddot = 0.0;
         
         let lambda = 2.0; // Cho Linear SMC
         let kp = 2.0;     // Cho PID SMC
@@ -772,7 +780,8 @@
         }
 
         // Khởi tạo reference ban đầu
-        xd = calculate_lifting_angle(desire_depth, beta);
+        target_alpha = calculate_lifting_angle(desire_depth, beta);
+        xd = target_alpha;
 
         // Buffer lưu trữ tín hiệu trễ
         let u_buffer = [];
@@ -810,8 +819,8 @@
                         borderWidth: 2
                     },
                     {
-                        label: 'Góc đích α_ref',
-                        data: [{x: xd, y: 0}], // mục tiêu: vị trí xd, vận tốc 0
+                        label: 'Góc đích (Mục tiêu)',
+                        data: [{x: target_alpha, y: 0}], // mục tiêu tối hậu
                         borderColor: '#10b981', // green-500
                         backgroundColor: '#10b981',
                         pointStyle: 'crossRot',
@@ -880,7 +889,7 @@
                         borderWidth: 2
                     },
                     {
-                        label: 'Góc đặt α_ref',
+                        label: 'Quỹ đạo đích α_ref',
                         data: [xd],
                         borderColor: '#6b7280', // gray-500
                         borderDash: [2, 2],
@@ -1237,15 +1246,20 @@
 
         // --- HÀM CẬP NHẬT GÓC REFERENCE VÀ GIAO DIỆN ---
         function updateReferenceAndCharts() {
-            xd = calculate_lifting_angle(desire_depth, beta);
+            target_alpha = calculate_lifting_angle(desire_depth, beta);
             let valAlphaRef = document.getElementById('val-alpha-ref');
-            if(valAlphaRef) valAlphaRef.textContent = xd.toFixed(3);
+            if(valAlphaRef) valAlphaRef.textContent = target_alpha.toFixed(3);
             
-            // Cập nhật điểm đích trên biểu đồ trạng thái
-            stateChart.data.datasets[1].data = [{x: xd, y: 0}];
-            stateChart.update();
-            
-            if(!isRunning) calculateAndRenderMath();
+            // Nếu không chạy mô phỏng thì nhảy xd thẳng về đích để hiển thị lập tức
+            if(!isRunning) {
+                xd = target_alpha;
+                alpharef_dot = 0.0;
+                alpharef_ddot = 0.0;
+                
+                stateChart.data.datasets[1].data = [{x: target_alpha, y: 0}];
+                stateChart.update();
+                calculateAndRenderMath();
+            }
         }
 
         // --- HÀM KHỞI TẠO VÀ CẬP NHẬT ĐỒ THỊ 3D (PLOTLY) ---
@@ -1319,9 +1333,6 @@
         // --- HÀM TÍNH TOÁN & CẬP NHẬT GIAO DIỆN TỪNG BƯỚC ---
         function calculateAndRenderMath() {
             
-            // Cập nhật logic xd phòng trường hợp thay đổi thông qua biến
-            xd = calculate_lifting_angle(desire_depth, beta);
-
             // Cập nhật hiển thị ước lượng độ sâu dựa trên trạng thái đo lường
             let current_est_depth = calculate_depth(x_m, beta);
             let calcDepthEl = document.getElementById('calc-depth');
@@ -1336,15 +1347,16 @@
                 v_ctrl = v_m;
             }
 
-            // Bộ điều khiển sử dụng dữ liệu ĐIỀU KHIỂN (x_ctrl, v_ctrl)
+            // Bộ điều khiển sử dụng dữ liệu ĐIỀU KHIỂN (x_ctrl, v_ctrl) & Sai số tham chiếu
             let e_ctrl = x_ctrl - xd;
-            let de_ctrl = v_ctrl;
+            let de_ctrl = v_ctrl - alpharef_dot;
+            
             let s, u_eq, u_sw, u;
             let sgn_s;
             
             if (surfaceType === 'linear') {
                 s = de_ctrl + lambda * e_ctrl;
-                u_eq = (a1 * v_ctrl + a2 * x_ctrl - lambda * v_ctrl) / b_sys;
+                u_eq = (a1 * v_ctrl + a2 * x_ctrl + alpharef_ddot - lambda * de_ctrl) / b_sys;
                 sgn_s = s > 0 ? 1 : (s < 0 ? -1 : 0);
                 
                 if (reachingType === 'sign') {
@@ -1356,7 +1368,7 @@
                 u = u_eq + u_sw;
             } else {
                 s = kp * e_ctrl + ki * int_e + kd * de_ctrl;
-                u_eq = (a1 * v_ctrl + a2 * x_ctrl - (kp/kd) * v_ctrl - (ki/kd) * e_ctrl) / b_sys;
+                u_eq = (a1 * v_ctrl + a2 * x_ctrl + alpharef_ddot - (kp/kd) * de_ctrl - (ki/kd) * e_ctrl) / b_sys;
                 sgn_s = s > 0 ? 1 : (s < 0 ? -1 : 0);
                 
                 if (reachingType === 'sign') {
@@ -1397,6 +1409,14 @@
             
             let calcVctrlEl = document.getElementById('calc-vctrl');
             if(calcVctrlEl) calcVctrlEl.textContent = f(v_ctrl);
+
+            // Tham chiếu & Sai số
+            let arefEl = document.getElementById('calc-aref');
+            if(arefEl) arefEl.textContent = f(xd);
+            let arefDotEl = document.getElementById('calc-aref-dot');
+            if(arefDotEl) arefDotEl.textContent = f(alpharef_dot);
+            let arefDdotEl = document.getElementById('calc-aref-ddot');
+            if(arefDdotEl) arefDdotEl.textContent = f(alpharef_ddot);
             
             let eqEEl = document.getElementById('eq-e');
             if(eqEEl) eqEEl.textContent = `${f(x_ctrl)} - ${f(xd)}`;
@@ -1415,7 +1435,7 @@
                 if(eqSEl) eqSEl.textContent = `${f(de_ctrl)} + ${f(lambda)}(${f(e_ctrl)})`;
                 
                 let eqUeqEl = document.getElementById('eq-ueq');
-                if(eqUeqEl) eqUeqEl.textContent = `( ${f(a1)}(${f(v_ctrl)}) + ${f(a2)}(${f(x_ctrl)}) - ${f(lambda)}(${f(v_ctrl)}) ) / ${fb(b_sys)}`;
+                if(eqUeqEl) eqUeqEl.textContent = `( ${f(a1)}(${f(v_ctrl)}) + ${f(a2)}(${f(x_ctrl)}) + ${f(alpharef_ddot)} - ${f(lambda)}(${f(de_ctrl)}) ) / ${fb(b_sys)}`;
                 
                 if (reachingType === 'sign') {
                     let eqUswEl = document.getElementById('eq-usw');
@@ -1429,7 +1449,7 @@
                 if(eqSEl) eqSEl.textContent = `${f(kp)}(${f(e_ctrl)}) + ${f(ki)}(${f(int_e)}) + ${f(kd)}(${f(de_ctrl)})`;
                 
                 let eqUeqEl = document.getElementById('eq-ueq');
-                if(eqUeqEl) eqUeqEl.textContent = `( ${f(a1)}(${f(v_ctrl)}) + ${f(a2)}(${f(x_ctrl)}) - ${f(kp/kd)}(${f(v_ctrl)}) - ${f(ki/kd)}(${f(e_ctrl)}) ) / ${fb(b_sys)}`;
+                if(eqUeqEl) eqUeqEl.textContent = `( ${f(a1)}(${f(v_ctrl)}) + ${f(a2)}(${f(x_ctrl)}) + ${f(alpharef_ddot)} - ${f(kp/kd)}(${f(de_ctrl)}) - ${f(ki/kd)}(${f(e_ctrl)}) ) / ${fb(b_sys)}`;
                 
                 if (reachingType === 'sign') {
                     let eqUswEl = document.getElementById('eq-usw');
@@ -1473,13 +1493,8 @@
                 if(betaInputEl) betaInputEl.value = beta;
                 let valBetaEl = document.getElementById('val-beta');
                 if(valBetaEl) valBetaEl.value = beta.toFixed(3);
-                
-                // Cập nhật giá trị reference đích mới
-                xd = calculate_lifting_angle(desire_depth, beta);
-                let valAlphaRef = document.getElementById('val-alpha-ref');
-                if(valAlphaRef) valAlphaRef.textContent = xd.toFixed(3);
 
-                // Giả định trạng thái THỰC cho mục đích vẽ đồ thị là giá trị đo được (vì không có dữ liệu thực siêu việt)
+                // Giả định trạng thái THỰC cho mục đích vẽ đồ thị là giá trị đo được
                 x = x_m;
                 v = v_m;
             } else {
@@ -1495,6 +1510,18 @@
 
             // Tính toán độ sâu thực tế (ước lượng từ x đo được hoặc thực)
             let current_est_depth = calculate_depth(x, beta);
+
+            // Cập nhật giá trị reference đích mới
+            target_alpha = calculate_lifting_angle(desire_depth, beta);
+            let valAlphaRef = document.getElementById('val-alpha-ref');
+            if(valAlphaRef) valAlphaRef.textContent = target_alpha.toFixed(3);
+
+            // BỘ LỌC THAM CHIẾU (Reference Model) - Tạo quỹ đạo trơn cho xd, alpharef_dot, alpharef_ddot
+            let wn_ref = 8.0; // Tần số tự nhiên (quyết định độ bám sát nhanh/chậm của ref)
+            let zeta_ref = 1.0; // Hệ số tắt dần (1.0 = tới hạn, không dao động)
+            alpharef_ddot = wn_ref * wn_ref * (target_alpha - xd) - 2.0 * zeta_ref * wn_ref * alpharef_dot;
+            xd += alpharef_dot * dt;
+            alpharef_dot += alpharef_ddot * dt;
 
             // 2. Lấy tín hiệu điều khiển u từ hàm tính toán
             let ctrl = calculateAndRenderMath();
@@ -1557,8 +1584,8 @@
             // Sử dụng vòng lặp while để xử lý trường hợp người dùng giảm thời gian hiển thị đột ngột
             while(stateData.length > maxPoints) stateData.shift();
             
-            // Cập nhật dynamic target xd line
-            stateChart.data.datasets[1].data = [{x: xd, y: 0}];
+            // Cập nhật dynamic target xd line (hiển thị đích đến cuối cùng)
+            stateChart.data.datasets[1].data = [{x: target_alpha, y: 0}];
 
             if (surfaceType === 'linear') {
                 let phaseData = phaseChart.data.datasets[0].data;
@@ -1600,7 +1627,7 @@
 
             timeLabels.push(t_str);
             timeDataX.push(x);
-            timeDataXd.push(xd);
+            timeDataXd.push(xd); // Vẽ quỹ đạo mượt xd thay vì target_alpha giật bậc thang
             
             depthLabels.push(t_str);
             depthData.push(current_est_depth);
@@ -1925,6 +1952,16 @@
             });
         }
 
+        // Lắng nghe thanh trượt LPF
+        let lpfInput = document.getElementById('input-lpf');
+        if(lpfInput) {
+            lpfInput.addEventListener('input', (e) => {
+                lpf_alpha = parseFloat(e.target.value);
+                let lpfVal = document.getElementById('val-lpf');
+                if(lpfVal) lpfVal.textContent = lpf_alpha.toFixed(2);
+            });
+        }
+
         // Lắng nghe thay đổi ẩn/hiện đồ thị tín hiệu
         let togDepth = document.getElementById('toggle-depth');
         if(togDepth) {
@@ -2179,12 +2216,15 @@
                 if(calcUdel) calcUdel.textContent = "0.000";
                 
                 // Cập nhật lại reference
-                xd = calculate_lifting_angle(desire_depth, beta);
+                target_alpha = calculate_lifting_angle(desire_depth, beta);
+                xd = target_alpha;
+                alpharef_dot = 0.0;
+                alpharef_ddot = 0.0;
                 let current_est_depth = calculate_depth(x_m, beta);
 
                 // Xóa data đồ thị
                 stateChart.data.datasets[0].data = [{x: x, y: v}];
-                stateChart.data.datasets[1].data = [{x: xd, y: 0}];
+                stateChart.data.datasets[1].data = [{x: target_alpha, y: 0}];
                 phaseChart.data.datasets[0].data = [{x: x - xd, y: 0}];
                 
                 pidTrajectory = { x: [x - xd], y: [0], z: [0] };
